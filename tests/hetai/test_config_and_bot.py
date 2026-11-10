@@ -60,3 +60,38 @@ def test_start_plan_points_to_same_app(monkeypatch):
     assert any(b.get("url", "").endswith("/app/") or "/app/" in b.get("url", "") for b in plan["buttons"])
     assert any("/admin" in b.get("url", "") for b in plan["buttons"])
     assert "未连接真实 Telegram Bot" in plan["text"]
+
+
+def test_transport_defaults(monkeypatch):
+    monkeypatch.setenv("HETAI_MODE", "demo")
+    monkeypatch.setenv("HETAI_HOST", "127.0.0.1")
+    monkeypatch.setenv("HETAI_BOT_TRANSPORT", "live")
+    reset_settings_cache()
+    assert Settings().resolved_transport == "local"
+    assert Settings().outbound_live is False
+
+    monkeypatch.setenv("HETAI_MODE", "production")
+    monkeypatch.setenv("HETAI_DATABASE_URL", "postgresql+asyncpg://u:p@localhost:5432/db")
+    monkeypatch.setenv("HETAI_WEBHOOK_SECRET", "a-very-long-secret")
+    monkeypatch.setenv("HETAI_ADMIN_IDS", "1")
+    monkeypatch.setenv("HETAI_SESSION_SECRET", "a-sufficiently-long-session-secret")
+    monkeypatch.setenv("HETAI_BOT_TOKEN", "123:ABC")
+    monkeypatch.delenv("HETAI_BOT_TRANSPORT", raising=False)
+    reset_settings_cache()
+    st = Settings()
+    st.validate_boot()
+    assert st.resolved_transport == "dry-run"
+    assert st.outbound_live is False
+
+
+def test_production_live_requires_real_token(monkeypatch):
+    monkeypatch.setenv("HETAI_MODE", "production")
+    monkeypatch.setenv("HETAI_DATABASE_URL", "postgresql+asyncpg://u:p@localhost:5432/db")
+    monkeypatch.setenv("HETAI_WEBHOOK_SECRET", "a-very-long-secret")
+    monkeypatch.setenv("HETAI_ADMIN_IDS", "1")
+    monkeypatch.setenv("HETAI_SESSION_SECRET", "a-sufficiently-long-session-secret")
+    monkeypatch.setenv("HETAI_BOT_TOKEN", "0:local-no-send")
+    monkeypatch.setenv("HETAI_BOT_TRANSPORT", "live")
+    reset_settings_cache()
+    with pytest.raises(RuntimeError, match="live"):
+        Settings().validate_boot()

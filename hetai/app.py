@@ -24,7 +24,7 @@ from hetai.bot.runtime import (
 from hetai.config import Settings, get_settings, reset_settings_cache
 from hetai.db import close_engine, get_engine, init_engine, session_scope
 from hetai.jobs import scheduler_status, start_scheduler, stop_scheduler
-from hetai.models import ProcessedUpdate, User
+from hetai.models import User
 from hetai.seed import seed_demo_if_empty
 from hetai.web.routes import router as web_router
 
@@ -94,6 +94,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "db": db_ok,
             "scheduler": scheduler_status(),
             "ingress": st.webhook_path or "/telegram/webhook",
+            "outbound": st.resolved_transport,
+            "outbound_live": st.outbound_live,
             "bot": bot_status(st),
         }
 
@@ -137,31 +139,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         st = get_settings()
         expected = st.webhook_secret or ("demo-local-only" if st.is_demo else "")
         provided = x_telegram_bot_api_secret_token or ""
-        import hmac
+        from hetai.bot.ingress import process_telegram_payload, secrets_equal
 
-        if not expected or not hmac.compare_digest(provided, expected):
+        if not secrets_equal(provided, expected):
             raise HTTPException(status_code=401, detail="webhook secret 无效")
         payload = await request.json()
-        update_id = payload.get("update_id")
-        if update_id is None:
-            raise HTTPException(status_code=400, detail="缺少 update_id")
-        async with session_scope() as session:
-            existing = (
-                await session.execute(
-                    select(ProcessedUpdate).where(ProcessedUpdate.update_id == int(update_id))
-                )
-            ).scalar_one_or_none()
-            if existing:
-                return {"ok": True, "replayed": True, "bot_connected": st.bot_connected}
-            session.add(
-                ProcessedUpdate(
-                    update_id=int(update_id),
-                    handled=True,
-                    detail="accepted; outbound send skipped unless bot is connected",
-                )
-            )
-        # V1：即使已连接也不主动调用 Telegram 发送，避免误触现网。只记录接入。
-        return {"ok": True, "replayed": False, "bot_connected": st.bot_connected, "sent": False}
+        return await process_telegram_payload(payload, st)
 
     @app.exception_handler(HTTPException)
     async def http_error(request: Request, exc: HTTPException):

@@ -8,6 +8,22 @@ from hetai.auth import validate_init_data
 from hetai.config import Settings, reset_settings_cache
 
 
+def _start_update(update_id: int, text: str = "/start", user_id: int = 900003) -> dict:
+    cmd = text.split()[0]
+    return {
+        "update_id": update_id,
+        "message": {
+            "message_id": 1,
+            "date": 1700000000,
+            "text": text,
+            "entities": [{"type": "bot_command", "offset": 0, "length": len(cmd)}],
+            "chat": {"id": user_id, "type": "private", "first_name": "T"},
+            "from": {"id": user_id, "is_bot": False, "first_name": "T"},
+        },
+    }
+
+
+
 def test_health_and_dashboard_from_db(demo_client):
     r = demo_client.get("/health")
     assert r.status_code == 200
@@ -17,7 +33,10 @@ def test_health_and_dashboard_from_db(demo_client):
     assert body["bot_connected"] is False
     assert body["single_bot"] is True
     assert body["ingress"] == "/telegram/webhook"
+    assert body["outbound"] == "local"
+    assert body["outbound_live"] is False
     assert body["bot"]["dispatcher_routers"] == ["start", "help", "menu"]
+    assert body["bot"]["transport"] == "local"
     home = demo_client.get("/admin")
     assert home.status_code == 200
     assert "概览" in home.text
@@ -52,13 +71,24 @@ def test_member_cannot_open_admin(demo_client):
 def test_webhook_secret_and_idempotency(demo_client):
     bad = demo_client.post("/telegram/webhook", json={"update_id": 1})
     assert bad.status_code == 401
+    short = demo_client.post(
+        "/telegram/webhook",
+        json={"update_id": 1},
+        headers={"X-Telegram-Bot-Api-Secret-Token": "x"},
+    )
+    assert short.status_code == 401
     headers = {"X-Telegram-Bot-Api-Secret-Token": "demo-local-only"}
-    first = demo_client.post("/telegram/webhook", json={"update_id": 42, "message": {}}, headers=headers)
+    first = demo_client.post("/telegram/webhook", json=_start_update(42), headers=headers)
     assert first.status_code == 200
-    assert first.json()["replayed"] is False
-    assert first.json()["sent"] is False
-    second = demo_client.post("/telegram/webhook", json={"update_id": 42}, headers=headers)
+    body = first.json()
+    assert body["replayed"] is False
+    assert body["sent"] is False
+    assert body["handler"] == "start"
+    assert body["transport"] == "local"
+    assert any(c["method"] == "sendMessage" for c in body["calls"])
+    second = demo_client.post("/telegram/webhook", json=_start_update(42), headers=headers)
     assert second.json()["replayed"] is True
+    assert second.status_code == 200
 
 
 def test_approve_submission_appears_in_feed(demo_client):

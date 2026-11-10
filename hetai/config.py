@@ -37,6 +37,11 @@ class Settings(BaseSettings):
     run_scheduler: bool = False
     seed_demo: bool = True
 
+    # local：演示强制、永不 HTTP；dry-run：生产默认，处理更新但不发送；
+    # live：显式选择后才走真实 Bot API（仍不会自动 setWebhook）。
+    bot_transport: str = ""
+
+
     @field_validator(
         "bot_token",
         "webhook_host",
@@ -49,6 +54,7 @@ class Settings(BaseSettings):
         "session_secret",
         "host",
         "log_level",
+        "bot_transport",
         mode="before",
     )
     @classmethod
@@ -64,6 +70,31 @@ class Settings(BaseSettings):
     @property
     def bot_connected(self) -> bool:
         return bool(self.bot_token) and not self.bot_token.startswith("0:")
+
+    @property
+    def resolved_transport(self) -> str:
+        """demo 永远 local；生产默认 dry-run，live 必须显式打开。"""
+        raw = (self.bot_transport or "").strip().lower().replace("_", "-")
+        if raw in {"dryrun", "dry-run", "dry"}:
+            raw = "dry-run"
+        if self.is_demo:
+            return "local"
+        if raw in {"", "dry-run"}:
+            return "dry-run"
+        if raw in {"local", "live"}:
+            return raw
+        raise RuntimeError(
+            "HETAI_BOT_TRANSPORT 只能是 local、dry-run 或 live（生产默认 dry-run，live 需显式配置）"
+        )
+
+    @property
+    def outbound_live(self) -> bool:
+        return self.resolved_transport == "live"
+
+    def bot_token_for_runtime(self) -> str:
+        if self.bot_token:
+            return self.bot_token
+        return "0:local-no-send"
 
     @property
     def admin_id_list(self) -> list[int]:
@@ -118,6 +149,12 @@ class Settings(BaseSettings):
             raise RuntimeError("生产模式必须设置足够强度的 HETAI_SESSION_SECRET")
         if not self.bot_token:
             raise RuntimeError("生产模式必须设置 HETAI_BOT_TOKEN")
+        try:
+            transport = self.resolved_transport
+        except RuntimeError:
+            raise
+        if transport == "live" and not self.bot_connected:
+            raise RuntimeError("生产 live 传输必须设置真实 HETAI_BOT_TOKEN（不能使用 0: 本地占位）")
 
 
 @lru_cache

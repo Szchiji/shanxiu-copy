@@ -12,7 +12,7 @@
 
 - 进程：`python -m hetai`（Uvicorn，建议单 worker）。
 - HTTP：同一 FastAPI 应用提供 `/app`、`/admin`、`/health`、`/api/auth/telegram`。
-- Telegram：`POST /telegram/webhook`，校验 secret。第一版只做去重记录，不向 Telegram 发送消息。
+- Telegram：`POST /telegram/webhook`，校验 secret，将 Update 交给唯一 Dispatcher。演示强制 local 无发送会话；生产默认 dry-run（处理但不发送）；仅显式 `HETAI_BOT_TRANSPORT=live` 才出站。不会自动 setWebhook。失败的处理可重试，成功才标记 processed。
 - 调度：仅当 `HETAI_RUN_SCHEDULER=true` 时启动**一个** APScheduler；默认关闭，避免多进程重复。
 
 ## 数据

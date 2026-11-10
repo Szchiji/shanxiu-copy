@@ -24,7 +24,7 @@
 - 匿名会话中转
 - 红包
 - 多 Bot 克隆 / Userbot
-- 真实出站 Telegram 消息（即使配置了 Token，本版本 webhook 也只记录、不发送，以免误触）
+- 自动向 Telegram 注册 webhook（setWebhook）；出站消息仅在生产显式设置 `HETAI_BOT_TRANSPORT=live` 时才会发送。演示与默认 dry-run 使用本地无 HTTP 会话处理 `/start` 等更新，不会外发
 
 ## 演示（非生产）
 
@@ -56,11 +56,11 @@ python -m hetai
 9. `/admin/tasks` 任务配置
 10. 切换示例身份为「示例成员」后访问 `/admin` 应被拒绝
 
-Webhook 演示密钥（仅本地）：请求头 `X-Telegram-Bot-Api-Secret-Token: demo-local-only`。这不是生产密钥。
+Webhook 演示密钥（仅本地）：请求头 `X-Telegram-Bot-Api-Secret-Token: demo-local-only`。这不是生产密钥。 演示模式下 `POST /telegram/webhook` 会把 Update 交给同一个 Dispatcher（`/start`、`/help`、菜单指向同一应用），出站由本地无发送会话记录，不会访问 Telegram。
 
 ## 生产（尚未部署）
 
-必须设置 `HETAI_MODE=production`、`HETAI_DATABASE_URL`（PostgreSQL）、`HETAI_BOT_TOKEN`、`HETAI_WEBHOOK_SECRET`、`HETAI_ADMIN_IDS`、`HETAI_SESSION_SECRET`。禁止 SQLite。缺少任一项都会拒绝启动。示例见 `docs/hetai/deploy.example.env`，其中不含真实密钥，也不会自动改外部 webhook 或现网机器人。
+必须设置 `HETAI_MODE=production`、`HETAI_DATABASE_URL`（PostgreSQL）、`HETAI_BOT_TOKEN`、`HETAI_WEBHOOK_SECRET`、`HETAI_ADMIN_IDS`、`HETAI_SESSION_SECRET`。禁止 SQLite。缺少任一项都会拒绝启动。出站默认 `HETAI_BOT_TRANSPORT=dry-run`（处理更新、准备回复、不发送）；只有显式设置为 `live` 才会走真实 Bot API。仍不会在启动时自动注册 webhook。示例见 `docs/hetai/deploy.example.env`。
 
 ## 测试
 

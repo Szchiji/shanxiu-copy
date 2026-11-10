@@ -171,12 +171,17 @@ class TaskConfig(Base):
 
 
 class ProcessedUpdate(Base):
-    """Webhook 去重，保证同一 update 只处理一次。"""
+    """Webhook 去重：成功才标 processed；失败可重试；同一 update 并发有守卫。"""
 
     __tablename__ = "hetai_processed_updates"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     update_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True)
-    handled: Mapped[bool] = mapped_column(Boolean, default=True)
+    handled: Mapped[bool] = mapped_column(Boolean, default=False)
+    status: Mapped[str] = mapped_column(String(16), default="processing", index=True)
     detail: Mapped[str] = mapped_column(String(256), default="")
+    outcome: Mapped[str] = mapped_column(Text, default="")
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.now(), onupdate=func.now()
+    )
