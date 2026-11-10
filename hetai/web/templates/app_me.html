@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>我的</h1>
+<p class="muted">同一账户下同时查看全局信用与各群积分，两套账本不会互相兑换。</p>
+<section class="grid">
+  <div class="card">
+    <div class="muted">全局信用</div>
+    <div class="n">{{ credit.balance if credit else 0 }}</div>
+  </div>
+  <div class="card">
+    <div class="muted">身份</div>
+    <div class="n" style="font-size:1.1rem">{{ user.display_name }}</div>
+    <div class="stat-sub muted">{{ user.role }}{% if user.is_demo_fixture %} · 示例数据{% endif %}</div>
+  </div>
+</section>
+<h2>各群积分</h2>
+{% if points %}
+<table>
+  <thead><tr><th>群</th><th>成员角色</th><th>积分</th></tr></thead>
+  <tbody>
+  {% for row in points %}
+    <tr>
+      <td>{{ row.group.title if row.group else "—" }}{% if row.group and row.group.is_demo_fixture %} <span class="badge demo">示例数据</span>{% endif %}</td>
+      <td>{{ row.role }}</td>
+      <td>{{ row.balance }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty">你还不在任何群中。</p>
+{% endif %}
+<h2>信用流水</h2>
+{% if credit_rows %}
+<table>
+  <thead><tr><th>变动</th><th>之后</th><th>原因</th></tr></thead>
+  <tbody>
+  {% for r in credit_rows %}
+    <tr><td>{{ r.delta }}</td><td>{{ r.balance_after }}</td><td>{{ r.reason }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty">暂无信用流水。</p>
+{% endif %}
+<h2>我的投稿</h2>
+{% if my_subs %}
+<table>
+  <thead><tr><th>标题</th><th>状态</th></tr></thead>
+  <tbody>
+  {% for s in my_subs %}
+    <tr>
+      <td>{{ s.title }}{% if s.is_demo_fixture %} <span class="badge demo">示例数据</span>{% endif %}</td>
+      <td>{{ s.status }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty">还没有投稿。<a href="/app/submit">去投稿</a></p>
+{% endif %}
+{% endblock %}

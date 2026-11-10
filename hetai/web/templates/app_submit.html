@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>投稿到目录</h1>
+{% if groups %}
+<form class="stack card" method="post" action="/app/submit">
+  <label>群
+    <select name="group_id" required>
+      {% for g in groups %}
+      <option value="{{ g.id }}">{{ g.title }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>标题 <input name="title" required maxlength="128"></label>
+  <label>正文 <textarea name="body" maxlength="4000"></textarea></label>
+  <div class="actions"><button type="submit">提交审核</button></div>
+</form>
+{% else %}
+<p class="empty">你当前的示例身份不在任何可投稿的群中。可在顶部切换为「示例成员」。</p>
+{% endif %}
+{% endblock %}

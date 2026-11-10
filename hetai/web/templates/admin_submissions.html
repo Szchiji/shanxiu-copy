@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>目录审核</h1>
+<form class="filters" method="get">
+  <input type="search" name="q" value="{{ q }}" placeholder="搜索标题或正文">
+  <select name="status">
+    {% for s in ["pending","approved","rejected"] %}
+    <option value="{{ s }}" {% if status == s %}selected{% endif %}>{{ s }}</option>
+    {% endfor %}
+  </select>
+  <select name="group_id">
+    <option value="0">全部群</option>
+    {% for g in all_groups %}
+    <option value="{{ g.id }}" {% if group_id == g.id %}selected{% endif %}>{{ g.title }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit">筛选</button>
+</form>
+{% if items %}
+<table>
+  <thead><tr><th>标题</th><th>群</th><th>作者</th><th>状态</th></tr></thead>
+  <tbody>
+  {% for s in items %}
+    <tr>
+      <td><a href="/admin/submissions/{{ s.id }}">{{ s.title }}</a>{% if s.is_demo_fixture %} <span class="badge demo">示例数据</span>{% endif %}</td>
+      <td>{{ groups[s.group_id].title if groups.get(s.group_id) else s.group_id }}</td>
+      <td>{{ authors[s.author_id].display_name if authors.get(s.author_id) else s.author_id }}</td>
+      <td>{{ s.status }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty">没有符合条件的投稿。</p>
+{% endif %}
+{% endblock %}

@@ -1,3 +1,5 @@
+> **合台新应用（rewrite/platform 分支）**：同一机器人、同一界面的第一版见 [hetai/README.md](hetai/README.md)。下文是仓库原有基线说明，尚未被合台替换。
+
 # Shanxiu - Telegram群组管理机器人系统
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>任务</h1>
+<p class="muted">调度器{% if scheduler.running %}运行中{% else %}当前未启动{% endif %}。所有任务都不发送 Telegram 通知。</p>
+{% if tasks %}
+{% for t in tasks %}
+<section class="card" style="margin-bottom:1rem">
+  <h2>{{ t.name }} <span class="pill">{{ t.key }}</span></h2>
+  <p>{{ t.description }}</p>
+  <p class="muted">上次：{{ t.last_status }} · {{ t.last_detail }}{% if t.last_run_at %} · {{ t.last_run_at }}{% endif %}</p>
+  <form class="filters" method="post" action="/admin/tasks/{{ t.id }}">
+    <label><input type="checkbox" name="enabled" value="1" {% if t.enabled %}checked{% endif %}> 启用</label>
+    <label>间隔秒 <input type="number" name="interval_seconds" value="{{ t.interval_seconds }}" min="60"></label>
+    <button type="submit">保存</button>
+    <button type="submit" name="run_now" value="1" class="secondary">立即跑一次</button>
+  </form>
+</section>
+{% endfor %}
+{% else %}
+<p class="empty">没有任务配置。</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>群组</h1>
+<form class="filters" method="get">
+  <input type="search" name="q" value="{{ q }}" placeholder="搜索群名称或说明">
+  <button type="submit">筛选</button>
+</form>
+{% if groups %}
+<table>
+  <thead><tr><th>群</th><th>状态</th><th>成员</th><th>待审</th></tr></thead>
+  <tbody>
+  {% for g in groups %}
+    <tr>
+      <td>
+        <a href="/admin/groups/{{ g.id }}">{{ g.title }}</a>
+        {% if g.is_demo_fixture %}<span class="badge demo">示例数据</span>{% endif %}
+        <div class="muted">chat_id {{ g.chat_id }}</div>
+      </td>
+      <td>{{ "启用" if g.is_active else "停用" }}</td>
+      <td>{{ counts[g.id].members }}</td>
+      <td>{{ counts[g.id].pending }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty">没有匹配的群组。</p>
+{% endif %}
+{% endblock %}

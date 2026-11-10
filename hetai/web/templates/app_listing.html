@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="/app">← 目录</a></p>
+<article class="card">
+  {% if item.is_demo_fixture %}<span class="badge demo">示例数据</span>{% endif %}
+  <h1>{{ item.title }}</h1>
+  <p class="muted">{{ group.title if group else "" }} · {{ author.display_name if author else "" }}</p>
+  <p>{{ item.body }}</p>
+</article>
+{% endblock %}

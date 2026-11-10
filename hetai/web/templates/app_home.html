@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>目录</h1>
+<p class="muted">已审核通过的投稿会出现在这里。这是同一合台应用的用户面，不是另一套站点。</p>
+<form class="filters" method="get" action="/app">
+  <input type="search" name="q" value="{{ q }}" placeholder="搜索标题或正文">
+  <select name="group_id">
+    <option value="0">全部群</option>
+    {% for g in groups %}
+    <option value="{{ g.id }}" {% if group_id == g.id %}selected{% endif %}>{{ g.title }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit">筛选</button>
+</form>
+{% if items %}
+<section class="listing">
+  {% for item in items %}
+  <article>
+    {% if item.is_demo_fixture %}<span class="badge demo">示例数据</span>{% endif %}
+    <h2><a href="/app/listings/{{ item.id }}">{{ item.title }}</a></h2>
+    <p class="muted">{{ group_map[item.group_id].title if group_map[item.group_id] else "群" }} · {{ authors[item.author_id].display_name if authors[item.author_id] else "作者" }}</p>
+    <p>{{ item.body[:120] }}{% if item.body|length > 120 %}…{% endif %}</p>
+  </article>
+  {% endfor %}
+</section>
+{% else %}
+<p class="empty">还没有已通过的目录条目。审核通过后会出现在这里。</p>
+{% endif %}
+{% endblock %}

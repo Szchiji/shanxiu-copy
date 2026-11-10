@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="/admin/groups">← 群组</a></p>
+<h1>{{ group.title }}{% if group.is_demo_fixture %} <span class="badge demo">示例数据</span>{% endif %}</h1>
+<div class="split">
+  <section class="card">
+    <h2>设置</h2>
+    <form class="stack" method="post" action="/admin/groups/{{ group.id }}/settings">
+      <label>名称 <input name="title" value="{{ group.title }}" required maxlength="128"></label>
+      <label>说明 <textarea name="description">{{ group.description }}</textarea></label>
+      <label><input type="checkbox" name="is_active" value="1" {% if group.is_active %}checked{% endif %}> 启用该群</label>
+      <label><input type="checkbox" name="points_enabled" value="1" {% if group.settings and group.settings.points_enabled %}checked{% endif %}> 启用积分</label>
+      <label><input type="checkbox" name="directory_enabled" value="1" {% if group.settings and group.settings.directory_enabled %}checked{% endif %}> 启用目录投稿</label>
+      <div class="actions"><button type="submit">保存设置</button></div>
+    </form>
+  </section>
+  <section class="card">
+    <h2>调整积分（仅本群账本）</h2>
+    <form class="stack" method="post" action="/admin/groups/{{ group.id }}/points">
+      <label>成员
+        <select name="user_id" required>
+          {% for m in members %}
+          <option value="{{ m.user_id }}">{{ users[m.user_id].display_name if users[m.user_id] else m.user_id }}（{{ m.role }}）</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>变动（负数为扣减） <input type="number" name="delta" required></label>
+      <label>原因 <input name="reason" maxlength="256"></label>
+      <label>幂等键（可选） <input name="idempotency_key" maxlength="64" placeholder="重复提交同一键不会扣两次"></label>
+      <div class="actions"><button type="submit">写入积分流水</button></div>
+    </form>
+  </section>
+</div>
+<h2>成员</h2>
+{% if members %}
+<table>
+  <thead><tr><th>成员</th><th>角色</th></tr></thead>
+  <tbody>
+  {% for m in members %}
+    <tr>
+      <td><a href="/admin/users/{{ m.user_id }}">{{ users[m.user_id].display_name if users[m.user_id] else m.user_id }}</a></td>
+      <td>{{ m.role }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty">此群还没有成员。</p>
+{% endif %}
+<h2>积分账户</h2>
+{% if accounts %}
+<table>
+  <thead><tr><th>用户 ID</th><th>余额</th></tr></thead>
+  <tbody>
+  {% for a in accounts %}
+    <tr><td><a href="/admin/users/{{ a.user_id }}">{{ users[a.user_id].display_name if users.get(a.user_id) else a.user_id }}</a></td><td>{{ a.balance }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty">尚无积分账户。</p>
+{% endif %}
+<h2>本群积分流水</h2>
+{% if ledger %}
+<table>
+  <thead><tr><th>用户</th><th>变动</th><th>之后</th><th>原因</th></tr></thead>
+  <tbody>
+  {% for r in ledger %}
+    <tr>
+      <td>{{ users[r.user_id].display_name if users.get(r.user_id) else r.user_id }}</td>
+      <td>{{ r.delta }}</td>
+      <td>{{ r.balance_after }}</td>
+      <td>{{ r.reason }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty">尚无流水。</p>
+{% endif %}
+{% endblock %}

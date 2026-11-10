@@ -1,0 +1,65 @@
+:root {
+  --bg: #f3efe6;
+  --ink: #1c1914;
+  --muted: #6b6258;
+  --paper: #fffcf6;
+  --line: #ddd4c5;
+  --accent: #8b3e2d;
+  --teal: #1f4e46;
+  --ok: #21543a;
+  --err: #8b1e1e;
+  --demo: #6a4a16;
+  --radius: 16px;
+  font-family: "Iwanami", "Source Han Serif SC", "Songti SC", "Noto Serif SC", "Georgia", serif;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: radial-gradient(1200px 500px at 10% -10%, #efe4cf 0, transparent 50%), var(--bg); color: var(--ink); }
+.skip { position: absolute; left: -999px; }
+.skip:focus { left: 1rem; top: 1rem; background: #fff; padding: .4rem; }
+.shell { max-width: 1080px; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+.top { display: flex; justify-content: space-between; gap: 1rem; align-items: flex-end; padding-bottom: .8rem; border-bottom: 2px solid var(--ink); }
+.logo { font-size: 1.8rem; letter-spacing: .18em; text-decoration: none; color: var(--ink); font-weight: 700; }
+.tag { margin: .15rem 0 0; color: var(--muted); font-size: .85rem; }
+.who { text-align: right; font-size: .9rem; }
+.who-name { display: block; }
+.pill, .badge { display: inline-block; border: 1px solid var(--line); border-radius: 999px; padding: .05rem .5rem; font-size: .75rem; background: #fff; }
+.badge.demo { border-color: #c9a15a; color: var(--demo); background: #fff7e6; }
+.banner { margin: .8rem 0 0; padding: .65rem .8rem; border-radius: 10px; font-size: .86rem; }
+.banner.demo { background: #fff3d8; color: var(--demo); border: 1px solid #e4c888; }
+.demo-as { margin-top: .45rem; font-size: .85rem; display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; }
+.demo-as a { color: var(--teal); }
+.demo-as a.on { font-weight: 700; text-decoration: none; color: var(--ink); }
+.nav { display: flex; flex-wrap: wrap; gap: .4rem; margin: 1rem 0 1.2rem; }
+.nav a { text-decoration: none; color: var(--ink); padding: .35rem .7rem; border-radius: 999px; border: 1px solid transparent; }
+.nav a.on { background: var(--ink); color: var(--paper); }
+.nav a:hover { border-color: var(--ink); }
+.flash { padding: .6rem .8rem; border-radius: 10px; }
+.flash.ok { background: #e6f4ea; color: var(--ok); }
+.flash.err { background: #fdecec; color: var(--err); }
+h1 { font-size: 1.45rem; margin: 0 0 .8rem; letter-spacing: .06em; }
+h2 { font-size: 1.1rem; margin: 1.4rem 0 .6rem; }
+.grid { display: grid; gap: .8rem; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.card { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 1rem; box-shadow: 0 1px 0 rgba(28,25,20,.04); }
+.card .n { font-size: 1.6rem; font-weight: 700; }
+.muted { color: var(--muted); font-size: .88rem; }
+table { width: 100%; border-collapse: collapse; background: var(--paper); border-radius: var(--radius); overflow: hidden; }
+th, td { text-align: left; padding: .65rem .7rem; border-bottom: 1px solid var(--line); vertical-align: top; font-size: .92rem; }
+th { font-size: .78rem; letter-spacing: .08em; text-transform: none; color: var(--muted); }
+a { color: var(--teal); }
+form.stack { display: grid; gap: .6rem; }
+label { display: grid; gap: .25rem; font-size: .88rem; }
+input, textarea, select { font: inherit; padding: .45rem .55rem; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--ink); }
+textarea { min-height: 7rem; }
+.actions { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+button, .btn { font: inherit; border: 0; background: var(--ink); color: var(--paper); padding: .45rem .85rem; border-radius: 999px; cursor: pointer; text-decoration: none; display: inline-block; }
+button.secondary, .btn.secondary { background: transparent; color: var(--ink); border: 1px solid var(--ink); }
+button.danger { background: var(--accent); }
+.filters { display: flex; flex-wrap: wrap; gap: .5rem; margin: 0 0 1rem; }
+.empty { padding: 2rem 1rem; text-align: center; color: var(--muted); background: var(--paper); border: 1px dashed var(--line); border-radius: var(--radius); }
+.listing { display: grid; gap: .8rem; }
+.listing article { background: var(--paper); border-radius: var(--radius); padding: 1rem 1.1rem; border: 1px solid var(--line); }
+.listing h2 { margin: 0 0 .3rem; }
+footer { margin-top: 2.5rem; color: var(--muted); font-size: .82rem; border-top: 1px solid var(--line); padding-top: 1rem; }
+.split { display: grid; gap: 1rem; }
+@media (min-width: 840px) { .split { grid-template-columns: 1.1fr .9fr; } }
+.stat-sub { margin-top: .15rem; }

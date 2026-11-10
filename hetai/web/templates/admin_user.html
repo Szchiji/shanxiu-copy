@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="/admin/users">← 成员</a></p>
+<h1>{{ user.display_name }}{% if user.is_demo_fixture %} <span class="badge demo">示例数据</span>{% endif %}</h1>
+<p class="muted">Telegram ID {{ user.telegram_id }} · 角色 {{ user.role }} · 全局信用 {{ credit.balance if credit else 0 }}</p>
+<div class="split">
+  <section class="card">
+    <h2>调整全局信用</h2>
+    <form class="stack" method="post" action="/admin/users/{{ user.id }}/credit">
+      <label>变动 <input type="number" name="delta" required></label>
+      <label>原因 <input name="reason" maxlength="256"></label>
+      <label>幂等键（可选） <input name="idempotency_key" maxlength="64"></label>
+      <div class="actions"><button type="submit">写入信用流水</button></div>
+    </form>
+  </section>
+  <section class="card">
+    <h2>角色</h2>
+    {% if can_super %}
+    <form class="stack" method="post" action="/admin/users/{{ user.id }}/role">
+      <label>角色
+        <select name="role">
+          {% for r in ["super","operator","member"] %}
+          <option value="{{ r }}" {% if user.role == r %}selected{% endif %}>{{ r }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <div class="actions"><button type="submit">保存角色</button></div>
+    </form>
+    {% else %}
+    <p class="muted">只有超级管理员可以修改角色。此操作对当前身份不可用。</p>
+    {% endif %}
+  </section>
+</div>
+<h2>各群积分（与信用分离）</h2>
+{% if point_rows %}
+<table>
+  <thead><tr><th>群</th><th>成员角色</th><th>积分</th></tr></thead>
+  <tbody>
+  {% for row in point_rows %}
+    <tr>
+      <td>{% if row.group %}<a href="/admin/groups/{{ row.group.id }}">{{ row.group.title }}</a>{% else %}—{% endif %}</td>
+      <td>{{ row.role }}</td>
+      <td>{{ row.balance }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty">未加入任何群。</p>
+{% endif %}
+<h2>信用流水</h2>
+{% if credit_rows %}
+<table>
+  <thead><tr><th>变动</th><th>之后</th><th>原因</th></tr></thead>
+  <tbody>
+  {% for r in credit_rows %}
+    <tr><td>{{ r.delta }}</td><td>{{ r.balance_after }}</td><td>{{ r.reason }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty">暂无信用流水。</p>
+{% endif %}
+{% endblock %}

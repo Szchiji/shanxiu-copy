@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ page_title }} · {{ app_name }}{% endblock %}</title>
+  <link rel="stylesheet" href="/static/hetai.css">
+</head>
+<body>
+  <a class="skip" href="#main">跳到正文</a>
+  <div class="shell">
+    <header class="top">
+      <div class="brand">
+        <a href="/app" class="logo">{{ app_name }}</a>
+        <p class="tag">同一个机器人 · 管理与应用在同一界面</p>
+      </div>
+      <div class="who">
+        <span class="who-name">{{ actor.display_name }}</span>
+        <span class="pill">{{ actor.role }}</span>
+      </div>
+    </header>
+    {% if is_demo %}
+    <div class="banner demo" role="status">
+      示例数据 · 本地演示（非生产）·
+      {% if bot_connected %}已配置 Bot Token{% else %}未连接真实 Telegram Bot，不会向外发送消息{% endif %}
+      · 架构已接入唯一 Dispatcher（{{ bot_status.dispatcher_routers | join("、") }}）
+    </div>
+    <nav class="demo-as" aria-label="切换示例身份">
+      <span>示例身份：</span>
+      {% for key, spec in demo_actors.items() %}
+        <a href="/demo/as/{{ key }}?next={{ request.url.path }}" class="{% if demo_as == key %}on{% endif %}">{{ spec.label }}</a>
+      {% endfor %}
+    </nav>
+    {% endif %}
+    <nav class="nav" aria-label="主导航">
+      <a href="/app" class="{% if nav in ['app','me','submit'] %}on{% endif %}">应用</a>
+      <a href="/app/me" class="{% if nav == 'me' %}on{% endif %}">我的</a>
+      <a href="/app/submit" class="{% if nav == 'submit' %}on{% endif %}">投稿</a>
+      {% if can_admin %}
+      <a href="/admin" class="{% if nav == 'dashboard' %}on{% endif %}">概览</a>
+      <a href="/admin/groups" class="{% if nav == 'groups' %}on{% endif %}">群组</a>
+      <a href="/admin/users" class="{% if nav == 'users' %}on{% endif %}">成员</a>
+      <a href="/admin/submissions" class="{% if nav == 'submissions' %}on{% endif %}">审核</a>
+      <a href="/admin/tasks" class="{% if nav == 'tasks' %}on{% endif %}">任务</a>
+      {% endif %}
+    </nav>
+    <main id="main">
+      {% if flash_ok %}<p class="flash ok" role="status">{{ flash_ok }}</p>{% endif %}
+      {% if flash_error %}<p class="flash err" role="alert">{{ flash_error }}</p>{% endif %}
+      {% block content %}{% endblock %}
+    </main>
+    <footer>
+      <p>合台第一版：群管、目录、积分与信用是同一应用下的模块。匿名会话、红包、多 Bot 克隆 / Userbot 尚未实现，界面不会假装已上线。</p>
+    </footer>
+  </div>
+</body>
+</html>

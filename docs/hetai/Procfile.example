@@ -1,0 +1,2 @@
+# 示例：不要覆盖源仓根目录 Procfile。需要时再手工改新服务的启动命令。
+web: python -m hetai

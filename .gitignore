@@ -49,3 +49,11 @@ Thumbs.db
 test_bot_instance_role.py
 test_comprehensive_instance_role.py
 demo_instance_role.py
+
+# hetai (new app on rewrite/platform)
+var/
+.venv-hetai/
+*.sqlite
+*.sqlite-journal
+.hetai-demo.sqlite*
+.pytest_cache/

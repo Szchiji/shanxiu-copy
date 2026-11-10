@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>概览</h1>
+<p class="muted">以下数字均来自数据库，不是写死的展示。管理区与应用共用同一套导航与账号。</p>
+<section class="grid">
+  <div class="card"><div class="muted">成员</div><div class="n">{{ stats.users }}</div></div>
+  <div class="card"><div class="muted">群组</div><div class="n">{{ stats.groups }}</div></div>
+  <div class="card"><div class="muted">待审投稿</div><div class="n">{{ stats.pending }}</div></div>
+  <div class="card"><div class="muted">已上架目录</div><div class="n">{{ stats.approved }}</div></div>
+  <div class="card"><div class="muted">群积分合计</div><div class="n">{{ stats.points_sum }}</div></div>
+  <div class="card"><div class="muted">信用合计</div><div class="n">{{ stats.credit_sum }}</div></div>
+</section>
+<p class="muted">调度器：{% if scheduler.running %}运行中{% else %}未启动（演示默认不开启，避免多进程重复）{% endif %}</p>
+<h2>最近投稿</h2>
+{% if recent %}
+<table>
+  <thead><tr><th>标题</th><th>状态</th></tr></thead>
+  <tbody>
+  {% for s in recent %}
+    <tr>
+      <td><a href="/admin/submissions/{{ s.id }}">{{ s.title }}</a>{% if s.is_demo_fixture %} <span class="badge demo">示例数据</span>{% endif %}</td>
+      <td>{{ s.status }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="empty">暂无投稿。</p>
+{% endif %}
+{% endblock %}

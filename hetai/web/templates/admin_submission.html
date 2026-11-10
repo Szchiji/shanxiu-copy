@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="/admin/submissions">← 审核列表</a></p>
+<article class="card">
+  {% if item.is_demo_fixture %}<span class="badge demo">示例数据</span>{% endif %}
+  <h1>{{ item.title }}</h1>
+  <p class="muted">{{ group.title if group else "" }} · {{ author.display_name if author else "" }} · {{ item.status }}</p>
+  <p>{{ item.body }}</p>
+  {% if item.review_note %}<p class="muted">审核备注：{{ item.review_note }}</p>{% endif %}
+</article>
+{% if item.status == "pending" %}
+<form class="stack card" method="post" action="/admin/submissions/{{ item.id }}/review" style="margin-top:1rem">
+  <label>备注 <input name="review_note" maxlength="256"></label>
+  <div class="actions">
+    <button type="submit" name="action" value="approve">通过并上架</button>
+    <button type="submit" name="action" value="reject" class="danger">拒绝</button>
+  </div>
+</form>
+{% endif %}
+{% endblock %}
