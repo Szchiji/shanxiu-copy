@@ -157,6 +157,9 @@ async def resolve_actor(request: Request, settings: Settings, session, *, requir
             is_demo=True,
             source="demo-fixture",
         )
+        from hetai.services.context import attach_actor_shell
+
+        await attach_actor_shell(request, session, actor)
         if require_admin and not can_admin(actor.role):
             raise HTTPException(status_code=403, detail="当前示例身份没有管理权限")
         return actor
@@ -177,8 +180,6 @@ async def resolve_actor(request: Request, settings: Settings, session, *, requir
     user = res.scalar_one_or_none()
     if not user:
         raise HTTPException(status_code=401, detail="用户不存在")
-    if user.is_banned:
-        raise HTTPException(status_code=403, detail="账号已被封禁")
     role = user.role
     if user.telegram_id in settings.admin_id_list:
         role = "super"
@@ -190,6 +191,11 @@ async def resolve_actor(request: Request, settings: Settings, session, *, requir
         is_demo=False,
         source="telegram-token",
     )
+    from hetai.services.context import attach_actor_shell
+
+    await attach_actor_shell(request, session, actor)
+    if user.is_banned:
+        raise HTTPException(status_code=403, detail="账号已被封禁")
     if require_admin and not can_admin(actor.role):
         raise HTTPException(status_code=403, detail="需要管理员权限")
     return actor

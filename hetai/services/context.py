@@ -18,6 +18,22 @@ COOKIE_CTX = "hetai_ctx"
 HINT_KEYS = ("group", "group_id", "chat_id", "startapp", "start_param", "tgWebAppStartParam")
 
 
+@dataclass(frozen=True)
+class GroupHint:
+    """Session-independent group label for chrome and error pages."""
+
+    id: int
+    title: str
+    is_demo_fixture: bool = False
+
+
+def snapshot_groups(groups: list[Group]) -> list[GroupHint]:
+    return [
+        GroupHint(id=g.id, title=g.title, is_demo_fixture=bool(getattr(g, "is_demo_fixture", False)))
+        for g in groups
+    ]
+
+
 @dataclass
 class GroupContext:
     view: str  # personal | group | global
@@ -121,6 +137,35 @@ def _hints_from_request(request: Request) -> tuple[str, Optional[int], Optional[
     return view, hints["group_id"], hints["chat_id"], explicit
 
 
+def personal_shell_context(
+    actor: Actor,
+    accessible: list[Group],
+    admin_groups: list[Group],
+) -> GroupContext:
+    """Personal view of groups the actor may already see. Never includes a denied group."""
+    is_super = can_super(actor.role)
+    return GroupContext(
+        view="personal",
+        accessible=snapshot_groups(accessible),
+        admin_groups=snapshot_groups(admin_groups),
+        is_super=is_super,
+        can_admin_current=False,
+        can_inbox=bool(admin_groups) or is_super,
+    )
+
+
+async def attach_actor_shell(request: Request, session: AsyncSession, actor: Actor) -> GroupContext:
+    """Store actor and a safe personal context for chrome, including error pages."""
+    request.state.actor = actor
+    existing = getattr(request.state, "safe_context", None)
+    if existing is not None:
+        return existing
+    _, accessible, admin_groups = await load_actor_memberships(session, actor)
+    ctx = personal_shell_context(actor, accessible, admin_groups)
+    request.state.safe_context = ctx
+    return ctx
+
+
 async def load_actor_memberships(
     session: AsyncSession, actor: Actor
 ) -> tuple[list[GroupMember], list[Group], list[Group]]:
@@ -157,6 +202,9 @@ async def resolve_group_context(
     members, accessible, admin_groups = await load_actor_memberships(session, actor)
     by_group = {m.group_id: m for m in members}
     is_super = can_super(actor.role)
+    request.state.actor = actor
+    if getattr(request.state, "safe_context", None) is None:
+        request.state.safe_context = personal_shell_context(actor, accessible, admin_groups)
     view, group_pk, chat_id, explicit = _hints_from_request(request)
 
     if view == "global":

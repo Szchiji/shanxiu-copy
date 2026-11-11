@@ -169,6 +169,9 @@ def test_unauthenticated_pages_and_apis_protected(preview_client):
     assert hook.status_code in {401, 303, 403}
     switch = preview_client.get("/demo/as/admin", follow_redirects=False)
     assert switch.status_code == 303
+    html_app = preview_client.get("/app", headers={"Accept": "text/html"}, follow_redirects=False)
+    assert html_app.status_code == 303
+    assert "/preview/login" in html_app.headers["location"]
 
 
 def test_login_session_and_identity_roles(preview_client):
@@ -191,6 +194,11 @@ def test_login_session_and_identity_roles(preview_client):
     preview_client.get("/demo/as/member")
     blocked = preview_client.get("/admin", headers={"Accept": "text/html"})
     assert blocked.status_code == 403
+    assert '<span class="who-name">王成员</span>' in blocked.text
+    assert '<span class="who-name">访客</span>' not in blocked.text
+    assert '<span class="pill">anonymous</span>' not in blocked.text
+    assert "示例身份（夹具）" in blocked.text
+    assert blocked.headers.get("location") is None
 
     # 示例写操作在登录且管理员身份下可用
     preview_client.get("/demo/as/admin")

@@ -236,3 +236,73 @@ def test_initdata_missing_invalid_expired():
         assert False, "expired should fail"
     except Exception:
         pass
+
+
+def test_authenticated_403_keeps_actor_and_does_not_leak(demo_client):
+    html = {"Accept": "text/html"}
+    _as(demo_client, "operator")
+    denied = demo_client.get("/app?group=2", headers=html)
+    assert denied.status_code == 403
+    assert "无权访问该群" in denied.text
+    assert '<span class="who-name">李运营</span>' in denied.text
+    assert '<span class="pill">operator</span>' in denied.text
+    assert '<span class="who-name">访客</span>' not in denied.text
+    assert '<span class="pill">anonymous</span>' not in denied.text
+    assert "示例身份（夹具）" in denied.text
+    assert "示例运营（仅华东运营群）" in denied.text
+    assert "个人视图" in denied.text
+    assert "待办" in denied.text
+    assert "示例群 · 华东运营" in denied.text
+    assert "示例群 · 测试交流" not in denied.text
+    assert "-100900002" not in denied.text
+    assert denied.headers.get("location") is None
+
+    _as(demo_client, "member")
+    member_denied = demo_client.get("/app?group=2", headers=html)
+    assert member_denied.status_code == 403
+    assert '<span class="who-name">王成员</span>' in member_denied.text
+    assert '<span class="who-name">访客</span>' not in member_denied.text
+    assert '<span class="pill">anonymous</span>' not in member_denied.text
+    assert "示例群 · 测试交流" not in member_denied.text
+    assert ">待办<" not in member_denied.text
+    assert "目录" in member_denied.text
+
+    admin_denied = demo_client.get("/admin", headers=html)
+    assert admin_denied.status_code == 403
+    assert '<span class="who-name">王成员</span>' in admin_denied.text
+    assert "当前示例身份没有管理权限" in admin_denied.text
+    assert '<span class="who-name">访客</span>' not in admin_denied.text
+    assert '<span class="pill">anonymous</span>' not in admin_denied.text
+    assert "示例身份（夹具）" in admin_denied.text
+    assert admin_denied.headers.get("location") is None
+
+
+def test_stylesheet_and_templates_desktop_shell():
+    import re
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[2]
+    css = (root / "hetai/web/static/hetai.css").read_text()
+    assert re.search(r"\.tabbar\s*\{[^}]*position:\s*fixed", css) is None
+    widths = re.findall(r"\.shell\s*\{[^}]*max-width:\s*([^;]+)", css)
+    assert widths, "shell max-width missing"
+    last = widths[-1].strip()
+    if last.startswith("var("):
+        # resolve --shell-max
+        m = re.search(r"--shell-max:\s*([^;]+)", css)
+        assert m, "shell max-width variable missing"
+        last = m.group(1).strip()
+    if last.endswith("rem"):
+        assert float(last[:-3]) >= 60
+    elif last.endswith("px"):
+        assert float(last[:-2]) >= 960
+    else:
+        raise AssertionError(f"unexpected shell max-width: {last}")
+    assert 'input[type="checkbox"]' in css
+    assert "label.check" in css
+    assert "context-meta" in css
+    html = (root / "hetai/web/templates/base.html").read_text()
+    assert "shell-body" in html
+    assert "context-meta" in html
+    settings = (root / "hetai/web/templates/app_group_settings.html").read_text()
+    assert 'class="check"' in settings

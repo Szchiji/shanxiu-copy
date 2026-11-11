@@ -10,6 +10,7 @@
 <body>
   <a class="skip" href="#main">跳到正文</a>
   <div class="shell">
+    <div class="shell-body">
     <header class="top">
       <div class="brand">
         <a href="/app?view=personal" class="logo">{{ app_name }}</a>
@@ -40,15 +41,17 @@
       <div class="context-now">
         {% if context and context.view == 'group' and context.group %}
           <strong>当前群</strong>
-          <span>{{ context.group.title }}</span>
-          {% if context.group.is_demo_fixture %}<span class="badge demo">示例数据</span>{% endif %}
-          {% if context.membership %}<span class="pill">{{ context.membership.role }}</span>{% endif %}
+          <div class="context-meta">
+            <span class="context-title">{{ context.group.title }}</span>
+            {% if context.group.is_demo_fixture %}<span class="badge demo">示例数据</span>{% endif %}
+            {% if context.membership %}<span class="pill">{{ context.membership.role }}</span>{% endif %}
+          </div>
         {% elif context and context.view == 'global' %}
           <strong>全局视图</strong>
-          <span>超级管理员工具，不是某个群的日常界面</span>
+          <div class="context-meta"><span>超级管理员工具，不是某个群的日常界面</span></div>
         {% else %}
           <strong>个人视图</strong>
-          <span>只显示你所在群的内容</span>
+          <div class="context-meta"><span>只显示你所在群的内容</span></div>
         {% endif %}
       </div>
       <form class="context-switch" method="get" action="{{ request.url.path }}">
@@ -80,6 +83,11 @@
       {% block content %}{% endblock %}
     </main>
 
+    <footer>
+      <p>合台：群管理、目录审核、积分与信用是同一个机器人下的模块。真实 Bot 交互、通知与站内分享需另授权测试 Bot 后才能验证；当前预览不会假装已连接 Telegram。</p>
+    </footer>
+    </div>
+
     <nav class="tabbar" aria-label="主导航">
       <a href="{% if context %}{{ context.href('/app') }}{% else %}/app{% endif %}" class="{% if nav == 'directory' %}on{% endif %}">目录</a>
       <a href="{% if context %}{{ context.href('/app/submit') }}{% else %}/app/submit{% endif %}" class="{% if nav == 'submit' %}on{% endif %}">投稿</a>
@@ -88,10 +96,6 @@
       <a href="{% if context %}{{ context.href('/app/inbox') }}{% else %}/app/inbox{% endif %}" class="{% if nav == 'inbox' %}on{% endif %}">待办</a>
       {% endif %}
     </nav>
-
-    <footer>
-      <p>合台：群管理、目录审核、积分与信用是同一个机器人下的模块。真实 Bot 交互、通知与站内分享需另授权测试 Bot 后才能验证；当前预览不会假装已连接 Telegram。</p>
-    </footer>
   </div>
   <script src="/static/hetai.js" defer></script>
 </body>

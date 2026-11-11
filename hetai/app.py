@@ -14,7 +14,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy import select
 
 from hetai import APP_NAME
-from hetai.auth import issue_access_token, validate_init_data
+from hetai.auth import DEMO_ACTORS, can_admin, can_super, issue_access_token, validate_init_data
 from hetai.bot.runtime import (
     bot_status,
     build_dispatcher,
@@ -191,23 +191,29 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def http_error(request: Request, exc: HTTPException):
         accept = request.headers.get("accept") or ""
         if "text/html" in accept:
+            settings = get_settings()
+            actor = getattr(request.state, "actor", None)
+            safe_ctx = getattr(request.state, "safe_context", None)
+            authenticated = actor is not None
+            if not authenticated:
+                actor = type("X", (), {"display_name": "访客", "role": "anonymous"})()
             return TEMPLATES.TemplateResponse(
                 request,
                 "error.html",
                 {
                     "request": request,
                     "app_name": APP_NAME,
-                    "actor": type("X", (), {"display_name": "访客", "role": "anonymous"})(),
-                    "is_demo": get_settings().is_demo,
-                    "is_preview": get_settings().is_preview,
-                    "bot_connected": get_settings().bot_connected,
-                    "bot_status": bot_status(get_settings()),
-                    "can_admin": False,
-                    "can_inbox": False,
-                    "can_super": False,
-                    "context": None,
-                    "demo_actors": {},
-                    "demo_as": "",
+                    "actor": actor,
+                    "is_demo": settings.is_demo,
+                    "is_preview": settings.is_preview,
+                    "bot_connected": settings.bot_connected,
+                    "bot_status": bot_status(settings),
+                    "can_admin": can_admin(actor.role) if authenticated else False,
+                    "can_inbox": bool(safe_ctx and safe_ctx.can_inbox) if authenticated else False,
+                    "can_super": can_super(actor.role) if authenticated else False,
+                    "context": safe_ctx if authenticated else None,
+                    "demo_actors": DEMO_ACTORS if authenticated and settings.uses_fixtures else {},
+                    "demo_as": (request.cookies.get("hetai_demo_as") or "") if authenticated else "",
                     "flash_error": None,
                     "flash_ok": None,
                     "nav": "",
