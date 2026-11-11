@@ -54,9 +54,26 @@ templates.env.globals["publish_reward_label"] = publish_reward_label
 router = APIRouter()
 
 
+def _app_root(request: Request) -> str:
+    path = request.url.path or ""
+    return "/tg" if path == "/tg" or path.startswith("/tg/") else "/app"
+
+
+def _surface_path(root: str, path: str) -> str:
+    if path.startswith("/app"):
+        return root + path[4:]
+    return path
+
+
 def _ctx(request: Request, actor, context: GroupContext | None = None, **extra):
     settings = get_settings()
     context = context or GroupContext(view="personal")
+    root = _app_root(request)
+    show_fixtures = bool(actor and getattr(actor, "is_demo", False))
+
+    def p(path: str) -> str:
+        return _surface_path(root, path)
+
     return {
         "request": request,
         "app_name": hetai.APP_NAME,
@@ -69,11 +86,17 @@ def _ctx(request: Request, actor, context: GroupContext | None = None, **extra):
         "can_admin": (context.can_inbox if context else False) or (can_admin(actor.role) if actor else False),
         "can_inbox": bool(context and context.can_inbox),
         "can_super": can_super(actor.role) if actor else False,
-        "demo_actors": DEMO_ACTORS if settings.uses_fixtures else {},
-        "demo_as": (request.cookies.get("hetai_demo_as") or "admin") if settings.uses_fixtures else "",
+        "show_fixtures": show_fixtures,
+        "demo_actors": DEMO_ACTORS if show_fixtures else {},
+        "demo_as": (request.cookies.get("hetai_demo_as") or "admin") if show_fixtures else "",
+        "app_root": root,
+        "p": p,
         "query": request.query_params,
         "flash_error": request.query_params.get("error"),
         "flash_ok": request.query_params.get("ok"),
+        "live_test": bool(settings.is_preview and settings.bot_connected and not show_fixtures),
+        "bot_username": settings.bot_username or "",
+        "moderation_enabled": bool(settings.test_chat_id_list()),
         **extra,
     }
 
@@ -119,6 +142,7 @@ async def root():
     return RedirectResponse("/app", status_code=302)
 
 
+@router.get("/tg", response_class=HTMLResponse)
 @router.get("/app", response_class=HTMLResponse)
 async def app_home(request: Request, q: str = ""):
     async with session_scope() as session:
@@ -172,6 +196,7 @@ def _page_directory(request, actor, ctx, items, group_map, authors, q):
     return _with_ctx(resp, ctx)
 
 
+@router.get("/tg/listings/{item_id}", response_class=HTMLResponse)
 @router.get("/app/listings/{item_id}", response_class=HTMLResponse)
 async def app_listing(request: Request, item_id: int):
     async with session_scope() as session:
@@ -207,6 +232,7 @@ async def app_listing(request: Request, item_id: int):
         return _with_ctx(resp, ctx)
 
 
+@router.get("/tg/me", response_class=HTMLResponse)
 @router.get("/app/me", response_class=HTMLResponse)
 async def app_me(request: Request):
     async with session_scope() as session:
@@ -265,6 +291,7 @@ async def app_me(request: Request):
         return _with_ctx(resp, ctx)
 
 
+@router.get("/tg/submit", response_class=HTMLResponse)
 @router.get("/app/submit", response_class=HTMLResponse)
 async def app_submit_form(request: Request):
     async with session_scope() as session:
@@ -279,6 +306,7 @@ async def app_submit_form(request: Request):
         return _with_ctx(resp, ctx)
 
 
+@router.post("/tg/submit")
 @router.post("/app/submit")
 async def app_submit(request: Request, group_id: int = Form(...), title: str = Form(...), body: str = Form("")):
     async with session_scope() as session:
@@ -310,6 +338,7 @@ async def app_submit(request: Request, group_id: int = Form(...), title: str = F
     return _redirect_ctx("/app/me", ctx, ok="已提交，等待审核")
 
 
+@router.get("/tg/inbox", response_class=HTMLResponse)
 @router.get("/app/inbox", response_class=HTMLResponse)
 async def app_inbox(request: Request, status: str = "pending"):
     async with session_scope() as session:
@@ -370,6 +399,7 @@ def _inbox_page(request, actor, ctx, items, groups, authors, status):
     return _with_ctx(resp, ctx)
 
 
+@router.get("/tg/inbox/{item_id}", response_class=HTMLResponse)
 @router.get("/app/inbox/{item_id}", response_class=HTMLResponse)
 async def app_inbox_item(request: Request, item_id: int):
     async with session_scope() as session:
@@ -425,11 +455,13 @@ async def app_inbox_item(request: Request, item_id: int):
         return _with_ctx(resp, ctx)
 
 
+@router.post("/tg/inbox/{item_id}/review")
 @router.post("/app/inbox/{item_id}/review")
 async def app_inbox_review(request: Request, item_id: int, action: str = Form(...), review_note: str = Form("")):
     return await _do_review(request, item_id, action, review_note, back="/app/inbox")
 
 
+@router.get("/tg/groups/{group_id}", response_class=HTMLResponse)
 @router.get("/app/groups/{group_id}", response_class=HTMLResponse)
 async def app_group_home(request: Request, group_id: int):
     async with session_scope() as session:
@@ -477,6 +509,7 @@ async def app_group_home(request: Request, group_id: int):
         return _with_ctx(resp, ctx)
 
 
+@router.get("/tg/groups/{group_id}/settings", response_class=HTMLResponse)
 @router.get("/app/groups/{group_id}/settings", response_class=HTMLResponse)
 async def app_group_settings(request: Request, group_id: int):
     async with session_scope() as session:
@@ -491,6 +524,7 @@ async def app_group_settings(request: Request, group_id: int):
         return _with_ctx(resp, ctx)
 
 
+@router.get("/tg/groups/{group_id}/ledger", response_class=HTMLResponse)
 @router.get("/app/groups/{group_id}/ledger", response_class=HTMLResponse)
 async def app_group_ledger(request: Request, group_id: int):
     async with session_scope() as session:
@@ -636,6 +670,8 @@ async def admin_group_detail(request: Request, group_id: int):
         return _with_ctx(resp, ctx)
 
 
+@router.post("/tg/groups/{group_id}/settings")
+@router.post("/app/groups/{group_id}/settings")
 @router.post("/admin/groups/{group_id}/settings")
 async def admin_group_settings(
     request: Request,
@@ -918,12 +954,18 @@ async def admin_task_update(
 
 @router.get("/demo/as/{key}")
 async def demo_switch(request: Request, key: str):
-    if not get_settings().uses_fixtures:
+    settings = get_settings()
+    if not settings.uses_fixtures:
         return _redirect("/app", error="当前模式不可切换示例身份")
+    if settings.is_preview:
+        from hetai.preview_auth import valid_preview_session
+
+        if not valid_preview_session(request, settings):
+            return _redirect("/preview/login", next="/app")
     if key not in DEMO_ACTORS:
         key = "admin"
     dest = request.query_params.get("next") or "/app"
-    if not dest.startswith("/"):
+    if not dest.startswith("/") or dest.startswith("//") or dest.startswith("/tg"):
         dest = "/app"
     resp = RedirectResponse(dest, status_code=303)
     resp.set_cookie("hetai_demo_as", key, httponly=True, samesite="lax")

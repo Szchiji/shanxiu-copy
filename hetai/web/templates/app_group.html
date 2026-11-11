@@ -5,11 +5,11 @@
 <p class="muted">{{ publish_reward_label(context.group) }} · 成员 {{ members_n }}{% if context.can_admin_current %} · 待审 {{ pending_n }}{% endif %}</p>
 <p class="actions">
   <a class="btn" href="{{ context.href('/app') }}">群目录</a>
-  <a class="btn secondary" href="{{ context.href('/app/submit') }}">去投稿</a>
-  <a class="btn secondary" href="/app/groups/{{ context.group.id }}/ledger">账本</a>
+  <a class="btn secondary" href="{{ context.href(p('/app/submit')) }}">去投稿</a>
+  <a class="btn secondary" href="{{ app_root }}/groups/{{ context.group.id }}/ledger">账本</a>
   {% if context.can_admin_current %}
-  <a class="btn secondary" href="{{ context.href('/app/inbox') }}">待办</a>
-  <a class="btn secondary" href="/app/groups/{{ context.group.id }}/settings">设置</a>
+  <a class="btn secondary" href="{{ context.href(p('/app/inbox')) }}">待办</a>
+  <a class="btn secondary" href="{{ app_root }}/groups/{{ context.group.id }}/settings">设置</a>
   {% endif %}
 </p>
 <h2>最近上架</h2>
@@ -17,7 +17,7 @@
 <section class="listing">
   {% for item in approved %}
   <article class="card">
-    <h2><a href="/app/listings/{{ item.id }}">{{ item.title }}</a></h2>
+    <h2><a href="{{ app_root }}/listings/{{ item.id }}">{{ item.title }}</a></h2>
     <p>{{ item.body[:120] }}{% if item.body|length > 120 %}…{% endif %}</p>
   </article>
   {% endfor %}

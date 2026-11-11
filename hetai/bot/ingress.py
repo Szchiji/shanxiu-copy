@@ -71,15 +71,35 @@ def _serialize_calls(session) -> list[dict[str, Any]]:
     return list(session.calls)
 
 
+def update_chat_id(payload: dict[str, Any]) -> int | None:
+    for key in ("message", "edited_message", "callback_query", "my_chat_member", "chat_member"):
+        block = payload.get(key) or {}
+        if not isinstance(block, dict):
+            continue
+        chat = block.get("chat") or (block.get("message") or {}).get("chat") if key == "callback_query" else block.get("chat")
+        if isinstance(chat, dict) and chat.get("id") is not None:
+            try:
+                return int(chat["id"])
+            except (TypeError, ValueError):
+                return None
+    return None
+
+
 async def dispatch_update(payload: dict[str, Any], settings: Settings) -> dict[str, Any]:
     bot = get_bot()
     if bot is None:
         raise RuntimeError("Bot 运行时尚未初始化")
     session = get_outbound_session()
-    before = len(session.calls) if session is not None else 0
+    before = len(getattr(session, "calls", []) or []) if session is not None else 0
     update = Update.model_validate(payload)
-    await get_dispatcher().feed_update(bot, update)
-    new_calls = session.calls[before:] if session is not None else []
+    from hetai.bot.guard import reset_update_chat_id, set_update_chat_id
+
+    token = set_update_chat_id(update_chat_id(payload))
+    try:
+        await get_dispatcher().feed_update(bot, update)
+    finally:
+        reset_update_chat_id(token)
+    new_calls = (getattr(session, "calls", []) or [])[before:] if session is not None else []
     handler = _infer_handler(payload)
     return {
         "handler": handler,

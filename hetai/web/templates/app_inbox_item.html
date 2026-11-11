@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<p><a href="{{ context.href('/app/inbox') if context else '/app/inbox' }}">← 待办列表</a></p>
+<p><a href="{{ context.href(p(app_root + '/inbox')) if context else app_root + '/inbox' }}">← 待办列表</a></p>
 <article class="card">
   {% if item.is_demo_fixture %}<span class="badge demo">示例数据</span>{% endif %}
   <h1>{{ item.title }}</h1>
@@ -9,7 +9,7 @@
   {% if item.review_note %}<p class="muted">审核备注：{{ item.review_note }}</p>{% endif %}
   <p class="banner demo">{{ reward_label }}{% if reward_points %}（{{ reward_points }} 积分）{% endif %} · 不会自动增加信用分</p>
 </article>
-<form class="stack card" method="post" action="/app/inbox/{{ item.id }}/review">
+<form class="stack card" method="post" action="{{ app_root }}/inbox/{{ item.id }}/review">
   <label>备注（将写入审核记录） <input name="review_note" maxlength="256" value="{{ item.review_note }}"></label>
   <div class="actions">
     <button type="submit" name="action" value="approve">{% if item.status == 'approved' %}再次提交通过（不会重复奖励）{% else %}通过并上架{% endif %}</button>

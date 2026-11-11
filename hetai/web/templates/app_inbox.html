@@ -3,16 +3,16 @@
 <h1>管理员待办</h1>
 <p class="lead">只显示你有权审核的群。{% if context and context.view == 'group' and context.group %}当前群：{{ context.group.title }}。{% endif %}普通群管理看不到其他群的投稿。</p>
 <nav class="filters" aria-label="状态">
-  <a href="{{ context.href('/app/inbox', status='pending') if context else '/app/inbox?status=pending' }}" class="{% if status == 'pending' %}on{% endif %}">待审</a>
-  <a href="{{ context.href('/app/inbox', status='approved') if context else '/app/inbox?status=approved' }}" class="{% if status == 'approved' %}on{% endif %}">已通过</a>
-  <a href="{{ context.href('/app/inbox', status='rejected') if context else '/app/inbox?status=rejected' }}" class="{% if status == 'rejected' %}on{% endif %}">已拒绝</a>
+  <a href="{{ context.href(p('/app/inbox'), status='pending') if context else app_root + '/inbox?status=pending' }}" class="{% if status == 'pending' %}on{% endif %}">待审</a>
+  <a href="{{ context.href(p('/app/inbox'), status='approved') if context else app_root + '/inbox?status=approved' }}" class="{% if status == 'approved' %}on{% endif %}">已通过</a>
+  <a href="{{ context.href(p('/app/inbox'), status='rejected') if context else app_root + '/inbox?status=rejected' }}" class="{% if status == 'rejected' %}on{% endif %}">已拒绝</a>
 </nav>
 {% if items %}
 <section class="listing">
   {% for item in items %}
   <article class="card">
     {% if item.is_demo_fixture %}<span class="badge demo">示例数据</span>{% endif %}
-    <h2><a href="{{ context.href('/app/inbox/' ~ item.id) if context else '/app/inbox/' ~ item.id }}">{{ item.title }}</a></h2>
+    <h2><a href="{{ context.href(p(app_root + '/inbox/' ~ item.id)) if context else app_root + '/inbox/' ~ item.id }}">{{ item.title }}</a></h2>
     <p class="muted">{{ groups[item.group_id].title if groups.get(item.group_id) else "群" }} · {{ authors[item.author_id].display_name if authors.get(item.author_id) else "作者" }} · {{ item.status }}</p>
   </article>
   {% endfor %}

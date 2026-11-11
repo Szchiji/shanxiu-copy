@@ -14,7 +14,15 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy import select
 
 from hetai import APP_NAME
-from hetai.auth import DEMO_ACTORS, can_admin, can_super, issue_access_token, validate_init_data
+from hetai.auth import (
+    DEMO_ACTORS,
+    FIXTURE_TELEGRAM_IDS,
+    can_admin,
+    can_super,
+    issue_access_token,
+    real_role_for_telegram_id,
+    validate_init_data,
+)
 from hetai.bot.runtime import (
     bot_status,
     build_dispatcher,
@@ -106,50 +114,55 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.post("/api/auth/telegram")
     async def auth_telegram(request: Request):
         st = get_settings()
-        if (st.is_demo or st.is_preview) and not st.bot_connected:
+        if not st.bot_connected:
             raise HTTPException(
                 status_code=401,
-                detail="演示模式未连接真实 Bot，不提供 Telegram 登录。本机回环可直接使用示例身份。",
+                detail="未连接真实 Bot，不提供 Telegram 登录。示例夹具入口请使用预览口令，不能代替实名登录。",
             )
         body = await request.json()
         init_data = (body or {}).get("initData") or ""
         payload = validate_init_data(init_data, st.bot_token)
         telegram_id = int(payload["user"]["id"])
+        if telegram_id in FIXTURE_TELEGRAM_IDS:
+            raise HTTPException(status_code=401, detail="不能使用示例身份进行 Telegram 登录")
         # start_param / chat / chat_instance never grant membership or admin scope.
         async with session_scope() as session:
-            user = (
-                await session.execute(select(User).where(User.telegram_id == telegram_id))
-            ).scalar_one_or_none()
-            if not user:
-                user = User(
-                    telegram_id=telegram_id,
+            from hetai.services.telegram_groups import upsert_real_user, verify_membership_via_api
+            from hetai.auth import Actor
+            from hetai.services.context import hinted_ids_from_mapping, load_actor_memberships
+
+            try:
+                user = await upsert_real_user(
+                    session,
+                    st,
+                    telegram_id,
                     username=payload["user"].get("username"),
                     display_name=payload["user"].get("first_name") or str(telegram_id),
-                    role="super" if telegram_id in st.admin_id_list else "member",
                 )
-                session.add(user)
-                await session.flush()
-            elif user.is_banned:
+            except ValueError as exc:
+                raise HTTPException(status_code=401, detail=str(exc)) from exc
+            if user.is_banned:
                 raise HTTPException(status_code=403, detail="账号已被封禁")
+            role = real_role_for_telegram_id(st, telegram_id, user.role)
+            user.role = role
             token = issue_access_token(telegram_id, st.session_secret)
-            from hetai.services.context import hinted_ids_from_mapping, load_actor_memberships
-            from hetai.auth import Actor
-
             actor = Actor(
                 user_id=user.id,
                 telegram_id=user.telegram_id,
                 display_name=user.display_name or str(telegram_id),
-                role=user.role,
+                role=role,
                 is_demo=False,
                 source="telegram-token",
             )
-            _, accessible, _ = await load_actor_memberships(session, actor)
             hint_map = {
                 "start_param": payload.get("start_param") or "",
                 "startapp": payload.get("start_param") or "",
                 "chat_id": (payload.get("chat") or {}).get("id") if payload.get("chat") else None,
             }
             hints = hinted_ids_from_mapping(hint_map)
+            if hints.get("chat_id"):
+                await verify_membership_via_api(session, st, actor, int(hints["chat_id"]))
+            _, accessible, _ = await load_actor_memberships(session, actor)
             allowed_ids = {g.id for g in accessible}
             chat_ids = {g.chat_id: g for g in accessible}
             hint_group = None
@@ -164,12 +177,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             {
                 "ok": True,
                 "telegram_id": telegram_id,
+                "is_owner": st.is_configured_owner(telegram_id),
                 "context_hint": context_hint,
                 "chat_instance_bound": False,
             }
         )
         # token stays in HttpOnly cookie; not returned in the body
-        resp.set_cookie("hetai_token", token, httponly=True, samesite="lax", secure=True)
+        secure = request.url.scheme == "https" or (request.headers.get("x-forwarded-proto") or "").startswith("https")
+        resp.set_cookie("hetai_token", token, httponly=True, samesite="lax", secure=secure, path="/")
         return resp
 
     @app.post(settings.webhook_path if settings else "/telegram/webhook")
@@ -178,7 +193,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         x_telegram_bot_api_secret_token: str | None = Header(default=None),
     ):
         st = get_settings()
-        expected = st.webhook_secret or ("demo-local-only" if st.is_demo else "")
+        expected = st.webhook_secret or ("demo-local-only" if st.is_demo and not st.bot_connected else "")
         provided = x_telegram_bot_api_secret_token or ""
         from hetai.bot.ingress import process_telegram_payload, secrets_equal
 
@@ -195,8 +210,22 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             actor = getattr(request.state, "actor", None)
             safe_ctx = getattr(request.state, "safe_context", None)
             authenticated = actor is not None
+            path = request.url.path or ""
+            if not authenticated and (path == "/tg" or path.startswith("/tg/")) and exc.status_code in {401, 403}:
+                return TEMPLATES.TemplateResponse(
+                    request,
+                    "tg_gate.html",
+                    {
+                        "request": request,
+                        "app_name": APP_NAME,
+                        "bot_username": settings.bot_username or "",
+                        "error_title": exc.detail,
+                        "page_title": "请在 Telegram 中打开",
+                    },
+                    status_code=exc.status_code,
+                )
             if not authenticated:
-                actor = type("X", (), {"display_name": "访客", "role": "anonymous"})()
+                actor = type("X", (), {"display_name": "访客", "role": "anonymous", "is_demo": False})()
             return TEMPLATES.TemplateResponse(
                 request,
                 "error.html",
@@ -212,8 +241,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                     "can_inbox": bool(safe_ctx and safe_ctx.can_inbox) if authenticated else False,
                     "can_super": can_super(actor.role) if authenticated else False,
                     "context": safe_ctx if authenticated else None,
-                    "demo_actors": DEMO_ACTORS if authenticated and settings.uses_fixtures else {},
-                    "demo_as": (request.cookies.get("hetai_demo_as") or "") if authenticated else "",
+                    "demo_actors": DEMO_ACTORS if authenticated and getattr(actor, "is_demo", False) else {},
+                    "demo_as": (request.cookies.get("hetai_demo_as") or "") if authenticated and getattr(actor, "is_demo", False) else "",
+                    "show_fixtures": bool(authenticated and getattr(actor, "is_demo", False)),
+                    "app_root": "/tg" if request.url.path.startswith("/tg") else "/app",
+                    "p": (lambda path, root=("/tg" if request.url.path.startswith("/tg") else "/app"): (root + path[4:] if path.startswith("/app") else path)),
+                    "live_test": bool(authenticated and settings.is_preview and settings.bot_connected and not getattr(actor, "is_demo", False)),
+                    "bot_username": settings.bot_username or "",
+                    "moderation_enabled": bool(settings.test_chat_id_list()),
+
                     "flash_error": None,
                     "flash_ok": None,
                     "nav": "",

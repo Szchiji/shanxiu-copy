@@ -140,10 +140,23 @@ async def _extract_csrf(request: Request) -> str:
     return ""
 
 
-def is_open_path(path: str) -> bool:
+def is_webhook_path(path: str, settings: Settings | None = None) -> bool:
+    expected = "/telegram/webhook"
+    if settings is not None:
+        expected = settings.webhook_path or expected
+    return path == expected
+
+
+def is_open_path(path: str, settings: Settings | None = None) -> bool:
     if path in OPEN_EXACT:
         return True
     if path.startswith("/static/"):
+        return True
+    if is_webhook_path(path, settings):
+        return True
+    if path == "/tg" or path.startswith("/tg/"):
+        return True
+    if path == "/api/auth/telegram":
         return True
     return False
 
@@ -203,7 +216,10 @@ class PreviewAccessMiddleware(BaseHTTPMiddleware):
         if not settings.is_preview:
             return await call_next(request)
         path = request.url.path
-        open_path = is_open_path(path)
+        # Telegram webhook has no browser Origin; secret header is the authenticator.
+        if is_webhook_path(path, settings):
+            return await call_next(request)
+        open_path = is_open_path(path, settings)
         mutating = request.method not in SAFE_METHODS
         if mutating and not origin_allowed(request):
             if path == "/preview/login":

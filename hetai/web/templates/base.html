@@ -7,13 +7,13 @@
   <title>{% block title %}{{ page_title }} · {{ app_name }}{% endblock %}</title>
   <link rel="stylesheet" href="/static/hetai.css">
 </head>
-<body>
+<body data-surface="{{ app_root or "/app" }}">
   <a class="skip" href="#main">跳到正文</a>
   <div class="shell">
     <div class="shell-body">
     <header class="top">
       <div class="brand">
-        <a href="/app?view=personal" class="logo">{{ app_name }}</a>
+        <a href="{{ app_root }}?view=personal" class="logo">{{ app_name }}</a>
         <p class="tag">同一个机器人 · 群聊快捷操作，复杂事务在这里完成</p>
       </div>
       <div class="who">
@@ -21,9 +21,9 @@
         <span class="pill">{{ actor.role }}</span>
       </div>
     </header>
-    {% if is_demo or is_preview %}
+    {% if show_fixtures %}
     <div class="banner demo" role="status">
-      {% if is_preview %}公开预览 · 示例数据 · 未连接真实 Telegram Bot，不会向外发送消息
+      {% if is_preview %}公开预览 · 示例数据 · 夹具身份与真实 Telegram 登录隔离，不会用预览口令操作真实群
       {% else %}示例数据 · 本地演示（非生产）·
       {% if bot_connected %}已配置 Bot Token{% else %}未连接真实 Telegram Bot，不会向外发送消息{% endif %}
       · 架构已接入唯一 Dispatcher（{{ bot_status.dispatcher_routers | join("、") }}）
@@ -35,6 +35,13 @@
         <a href="/demo/as/{{ key }}?next={{ request.url.path }}" class="{% if demo_as == key %}on{% endif %}">{{ spec.label }}</a>
       {% endfor %}
     </nav>
+    {% elif live_test %}
+    <div class="banner demo" role="status">
+      专用测试 Bot{% if bot_username %}（@{{ bot_username }}）{% endif %} · 当前为 Telegram 实名会话，不是示例夹具。
+      数据存在临时 SQLite，不能当作生产持久化。
+      {% if not moderation_enabled %}群管理写入在测试群被明确授权前保持关闭。{% endif %}
+      这不是已完成的生产就绪声明。
+    </div>
     {% endif %}
 
     <div class="context-bar" aria-label="当前视图">
@@ -67,14 +74,14 @@
           </select>
         </label>
         {% if can_super %}
-        <a class="btn secondary compact" href="/admin?view=global">全局工具</a>
+        {% if show_fixtures %}<a class="btn secondary compact" href="/admin?view=global">全局工具</a>{% endif %}
         {% endif %}
         <noscript><button type="submit">切换</button></noscript>
       </form>
     </div>
 
     <p class="back-row">
-      <a class="back-link js-back" href="/app?view=personal">返回</a>
+      <a class="back-link js-back" href="{{ app_root }}?view=personal">返回</a>
     </p>
 
     <main id="main">
@@ -89,14 +96,15 @@
     </div>
 
     <nav class="tabbar" aria-label="主导航">
-      <a href="{% if context %}{{ context.href('/app') }}{% else %}/app{% endif %}" class="{% if nav == 'directory' %}on{% endif %}">目录</a>
-      <a href="{% if context %}{{ context.href('/app/submit') }}{% else %}/app/submit{% endif %}" class="{% if nav == 'submit' %}on{% endif %}">投稿</a>
-      <a href="{% if context %}{{ context.href('/app/me') }}{% else %}/app/me{% endif %}" class="{% if nav == 'me' %}on{% endif %}">我的</a>
+      <a href="{% if context %}{{ context.href(app_root) }}{% else %}{{ app_root }}{% endif %}" class="{% if nav == 'directory' %}on{% endif %}">目录</a>
+      <a href="{% if context %}{{ context.href(p('/app/submit')) }}{% else %}{{ app_root }}/submit{% endif %}" class="{% if nav == 'submit' %}on{% endif %}">投稿</a>
+      <a href="{% if context %}{{ context.href(p('/app/me')) }}{% else %}{{ app_root }}/me{% endif %}" class="{% if nav == 'me' %}on{% endif %}">我的</a>
       {% if can_inbox %}
-      <a href="{% if context %}{{ context.href('/app/inbox') }}{% else %}/app/inbox{% endif %}" class="{% if nav == 'inbox' %}on{% endif %}">待办</a>
+      <a href="{% if context %}{{ context.href(p('/app/inbox')) }}{% else %}{{ app_root }}/inbox{% endif %}" class="{% if nav == 'inbox' %}on{% endif %}">待办</a>
       {% endif %}
     </nav>
   </div>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="/static/hetai.js" defer></script>
 </body>
 </html>

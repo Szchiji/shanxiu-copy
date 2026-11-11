@@ -22,10 +22,10 @@
     <p class="muted">角色 {{ row.role }} · 积分 {{ row.balance }}</p>
     <p>{{ publish_reward_label(row.group) }}</p>
     <p class="actions">
-      <a class="btn secondary" href="/app?group={{ row.group.id }}">查看目录</a>
-      <a class="btn secondary" href="/app/groups/{{ row.group.id }}/ledger">账本</a>
+      <a class="btn secondary" href="{{ app_root }}?group={{ row.group.id }}">查看目录</a>
+      <a class="btn secondary" href="{{ app_root }}/groups/{{ row.group.id }}/ledger">账本</a>
       {% if row.group %}
-      <a class="btn secondary" href="/app/groups/{{ row.group.id }}">群主页</a>
+      <a class="btn secondary" href="{{ app_root }}/groups/{{ row.group.id }}">群主页</a>
       {% endif %}
     </p>
     {% if row.ledger %}
@@ -63,9 +63,9 @@
   {% endfor %}
 </section>
 {% else %}
-<p class="empty">还没有投稿。<a href="/app/submit">去投稿</a></p>
+<p class="empty">还没有投稿。<a href="{{ app_root }}/submit">去投稿</a></p>
 {% endif %}
 {% if can_super %}
-<p class="tools-link"><a href="/admin?view=global">打开超级管理员全局工具</a></p>
+{% if show_fixtures %}<p class="tools-link"><a href="/admin?view=global">打开超级管理员全局工具</a></p>{% endif %}
 {% endif %}
 {% endblock %}

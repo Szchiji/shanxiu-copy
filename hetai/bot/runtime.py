@@ -7,7 +7,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 
-from hetai.bot.handlers import help_router, menu_router, start_router
+from hetai.bot.handlers import chat_member_router, help_router, menu_router, start_router
 from hetai.bot.session import LocalNoSendSession
 from hetai.config import Settings
 
@@ -24,16 +24,17 @@ def build_dispatcher() -> Dispatcher:
     dp.include_router(start_router)
     dp.include_router(help_router)
     dp.include_router(menu_router)
+    dp.include_router(chat_member_router)
     _dispatcher = dp
     return dp
 
 
 def reset_runtime() -> None:
     global _dispatcher, _bot, _session
-    from hetai.bot.handlers import help_router, menu_router, start_router
+    from hetai.bot.handlers import chat_member_router, help_router, menu_router, start_router
 
     if _dispatcher is not None:
-        for router in (start_router, help_router, menu_router):
+        for router in (start_router, help_router, menu_router, chat_member_router):
             if router in _dispatcher.sub_routers:
                 _dispatcher.sub_routers.remove(router)
             router._parent_router = None
@@ -67,19 +68,22 @@ async def setup_bot(settings: Settings) -> Bot:
     global _bot, _session
     transport = settings.resolved_transport
     token = settings.bot_token_for_runtime()
+    from hetai.bot.guard import GuardedSession
+
     if transport == "live":
-        _session = None
         _bot = Bot(
             token=token,
             default=DefaultBotProperties(parse_mode=ParseMode.HTML),
         )
     else:
-        _session = LocalNoSendSession()
         _bot = Bot(
             token=token,
-            session=_session,
+            session=LocalNoSendSession(),
             default=DefaultBotProperties(parse_mode=ParseMode.HTML),
         )
+    guarded = GuardedSession(_bot.session, settings)
+    _bot.session = guarded
+    _session = guarded
     return _bot
 
 

@@ -23,6 +23,8 @@ DEMO_ACTORS = {
 }
 
 INITDATA_MAX_AGE = 86400
+INITDATA_CLOCK_SKEW = 300
+FIXTURE_TELEGRAM_IDS = {spec["telegram_id"] for spec in DEMO_ACTORS.values()}
 
 
 @dataclass
@@ -70,7 +72,10 @@ def validate_init_data(init_data: str, bot_token: str, *, max_age: int = INITDAT
         auth_date = int(auth_date_raw)
     except ValueError as exc:
         raise HTTPException(status_code=401, detail="auth_date 无效") from exc
-    if max_age > 0 and time.time() - auth_date > max_age:
+    now = time.time()
+    if auth_date > now + INITDATA_CLOCK_SKEW:
+        raise HTTPException(status_code=401, detail="initData 的 auth_date 超出允许的时钟偏差")
+    if max_age > 0 and now - auth_date > max_age:
         raise HTTPException(status_code=401, detail="initData 已过期")
     user = None
     if parsed.get("user"):
@@ -130,7 +135,82 @@ def can_super(role: str) -> bool:
     return role == "super"
 
 
+def is_telegram_surface(request: Request) -> bool:
+    path = request.url.path or ""
+    return path == "/tg" or path.startswith("/tg/") or path == "/api/auth/telegram"
+
+
+def has_telegram_session(request: Request) -> bool:
+    auth = request.headers.get("authorization") or ""
+    if auth.lower().startswith("bearer "):
+        return True
+    return bool(request.cookies.get("hetai_token"))
+
+
+def real_role_for_telegram_id(settings: Settings, telegram_id: int, stored_role: str | None = None) -> str:
+    if settings.is_configured_owner(telegram_id):
+        return "super"
+    role = (stored_role or "member").strip() or "member"
+    if role == "super":
+        return "member"
+    return role
+
+
+async def resolve_telegram_actor(request: Request, settings: Settings, session, *, require_admin: bool = False) -> Actor:
+    if not settings.bot_connected:
+        raise HTTPException(status_code=401, detail="未连接测试 Bot，无法使用 Telegram 登录")
+    token = None
+    auth = request.headers.get("authorization") or ""
+    if auth.lower().startswith("bearer "):
+        token = auth[7:].strip()
+    if not token:
+        token = request.cookies.get("hetai_token")
+    if not token:
+        raise HTTPException(status_code=401, detail="需要在 Telegram Mini App 中打开并完成登录")
+    telegram_id = verify_access_token(token, settings.session_secret)
+    if telegram_id in FIXTURE_TELEGRAM_IDS:
+        raise HTTPException(status_code=401, detail="不能使用示例身份访问真实测试入口")
+    from sqlalchemy import select
+
+    res = await session.execute(select(User).where(User.telegram_id == telegram_id))
+    user = res.scalar_one_or_none()
+    if not user or user.is_demo_fixture:
+        raise HTTPException(status_code=401, detail="用户不存在")
+    if user.is_banned:
+        actor = Actor(
+            user_id=user.id,
+            telegram_id=user.telegram_id,
+            display_name=user.display_name or user.username or str(user.telegram_id),
+            role=real_role_for_telegram_id(settings, telegram_id, user.role),
+            is_demo=False,
+            source="telegram-token",
+        )
+        from hetai.services.context import attach_actor_shell
+
+        await attach_actor_shell(request, session, actor)
+        raise HTTPException(status_code=403, detail="账号已被封禁")
+    role = real_role_for_telegram_id(settings, telegram_id, user.role)
+    if user.role != role:
+        user.role = role
+    actor = Actor(
+        user_id=user.id,
+        telegram_id=user.telegram_id,
+        display_name=user.display_name or user.username or str(user.telegram_id),
+        role=role,
+        is_demo=False,
+        source="telegram-token",
+    )
+    from hetai.services.context import attach_actor_shell
+
+    await attach_actor_shell(request, session, actor)
+    if require_admin and not can_admin(actor.role):
+        raise HTTPException(status_code=403, detail="需要管理员权限")
+    return actor
+
+
 async def resolve_actor(request: Request, settings: Settings, session, *, require_admin: bool = False) -> Actor:
+    if is_telegram_surface(request):
+        return await resolve_telegram_actor(request, settings, session, require_admin=require_admin)
     if settings.uses_fixtures:
         if settings.is_demo and not is_loopback(request):
             raise HTTPException(status_code=403, detail="演示模式仅允许本机回环访问")

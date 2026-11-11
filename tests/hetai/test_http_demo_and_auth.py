@@ -35,7 +35,7 @@ def test_health_and_dashboard_from_db(demo_client):
     assert body["ingress"] == "/telegram/webhook"
     assert body["outbound"] == "local"
     assert body["outbound_live"] is False
-    assert body["bot"]["dispatcher_routers"] == ["start", "help", "menu"]
+    assert body["bot"]["dispatcher_routers"] == ["start", "help", "menu", "chat_member"]
     assert body["bot"]["transport"] == "local"
     home = demo_client.get("/admin")
     assert home.status_code == 200
@@ -184,4 +184,4 @@ def test_initdata_signature_negative(monkeypatch):
 def test_production_auth_endpoint_not_demo_login(demo_client):
     r = demo_client.post("/api/auth/telegram", json={"initData": "x"})
     assert r.status_code == 401
-    assert "演示模式未连接真实 Bot" in r.json()["detail"]
+    assert "未连接真实 Bot" in r.json()["detail"]

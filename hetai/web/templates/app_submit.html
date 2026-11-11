@@ -3,7 +3,7 @@
 <h1>投稿到目录</h1>
 <p class="lead">提交后进入待审。是否奖励积分由该群明确规则决定，默认是 0，不会自动增加信用分。</p>
 {% if groups %}
-<form class="stack card" method="post" action="/app/submit">
+<form class="stack card" method="post" action="{{ app_root }}/submit">
   <label>群
     <select name="group_id" required>
       {% for g in groups %}

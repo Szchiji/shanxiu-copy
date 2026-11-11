@@ -77,9 +77,9 @@ HETAI_PYTEST=1 pytest tests/hetai -q
 
 - 预览口令 `HETAI_PREVIEW_ACCESS_SECRET` 至少 12 个字符、至少 8 个不同字符，且不能有首尾空白；`HETAI_SESSION_SECRET` 仍须至少 24 个字符、至少 8 个不同字符，且不能有首尾空白。未满足则拒绝启动。
 - 允许绑定 `0.0.0.0`；若环境提供 `PORT` 且未显式设置 `HETAI_PORT`，则使用 `PORT`。
-- 未登录只能访问 `/health`、`/preview/login` 和静态资源。`/health` 只返回 `ok` / `app` / `mode`。
+- 未登录只能访问 `/health`、`/preview/login`、静态资源、Webhook `POST /telegram/webhook`（须校验 secret）以及真实入口 `/tg` 与 `POST /api/auth/telegram`（须有效 initData）。`/health` 只返回 `ok` / `app` / `mode`。
 - 登录页：`GET/POST /preview/login`，字段 `username`（固定 `preview`，可忽略）与 `password`（预览口令），另有隐藏域 `csrf_token`、`next`。
-- 登录后可切换示例身份并做受控的审核/积分等写操作。数据为示例，传输为 local，不发送 Telegram，不自动注册 webhook。
+- 登录后可切换示例身份并做受控的审核/积分等写操作。夹具数据与真实 Telegram 身份隔离；未显式配置 `HETAI_BOT_TRANSPORT=live` 时传输仍为 local，不会发送 Telegram。
 - 退出：`POST /preview/logout`。
 - 不要把预览口令写入仓库或日志。本地可用隔离的权限 600 凭证文件，不要提交。
 
@@ -102,10 +102,25 @@ Telegram Mini App 的 initData 校验（签名、`auth_date` 缺失或过期）�
 
 主要路由：`/app` 目录，`/app/listings/{id}` 条目，`/app/submit` 投稿，`/app/me` 我的，`/app/inbox` 与 `/app/inbox/{id}` 待办审核，`/app/groups/{id}` 群主页，`/app/groups/{id}/settings` 设置，`/app/groups/{id}/ledger` 账本，`/admin?view=global` 超级管理员全局工具。`/admin/submissions` 仍指向待办，兼容原路径。
 
-## 尚未实现（需另授权测试 Bot 后）
+## 专用测试 Bot（同一预览服务内隔离）
 
-- 真实 Telegram Bot 登录、群内快捷操作、私聊入口与通知、在客户端内打开 Mini App 的完整验证
-- 自动 `setWebhook`、向 Telegram 发送真实消息、inline / 站内分享
-- 匿名会话、红包、多 Bot 克隆 / Userbot
+同一 `HETAI_MODE=preview` 服务可以同时提供：
 
-当前预览和演示都不会假装已经连上真实 Bot。
+- 预览口令保护的 `/app` 示例夹具（身份切换、示例群）。预览口令不能用来取得真实 Telegram 身份，也不能操作真实群。
+- 真实 Telegram 入口 `/tg` 与 `POST /api/auth/telegram`。只接受官方 `initData`（HMAC、`auth_date`、时钟偏差）。会话为 HttpOnly / SameSite Cookie，令牌不出现在 JSON 里。`startapp` / `group` / `chat_id` / `chat_instance` 不会授权入群。
+
+超级管理员只来自环境变量 `HETAI_OWNER_TELEGRAM_ID`（数字用户 ID），并必须与 initData 或真实 Update 中的 `telegram_id` 一致。不会把首个访问者、用户名或 URL 参数当成主人，也不会把该 ID 写进仓库默认配置。示例夹具用户（900001–900004）不能走真实登录。
+
+`HETAI_BOT_TRANSPORT=live` 时预览才会向 Telegram 出站，且必须同时有真实 Token、足够强度的 webhook secret，以及 `https` 的 `HETAI_WEBAPP_URL`。出站仅允许回复当前 Update 所在会话；踢人、删消息等管理写入在 `HETAI_TEST_CHAT_IDS` 明确授权前失败关闭。机器人保持隐私模式，webhook 只订阅 `message`、`callback_query`、`my_chat_member`。应用启动时不会自动 `setWebhook` 或 `getUpdates`。
+
+存储仍是临时 SQLite，不能当作生产持久化，也不是生产就绪声明。群只有在 Bot 被实际拉进该群并由事件/`getChatMember` 确认后才会出现在 `/tg`。尚未绑定测试群时显示安全的未绑定说明，不会回落到夹具数据。
+
+入口：`https://t.me/<bot_username>` 与 Mini App `https://<webapp>/tg`。
+
+## 仍未实现 / 不能声称已验证
+
+- 在 Telegram 客户端内打开 Mini App 的完整实机验证（需所有者实际 /start 并打开菜单后才能确认）
+- 向第三方主动发送测试消息、通知、inline / 站内分享
+- 生产级持久化、支付、红包、匿名会话、多 Bot 克隆 / Userbot
+
+不要把当前预览说成已经完成生产就绪或已经在客户端内验证。

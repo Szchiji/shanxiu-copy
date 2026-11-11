@@ -43,9 +43,9 @@ def test_single_dispatcher_registers_unified_handlers():
     reset_runtime()
     dp = build_dispatcher()
     names = registered_router_names()
-    assert names == ["start", "help", "menu"]
+    assert names == ["start", "help", "menu", "chat_member"]
     assert dp is build_dispatcher()  # same instance
-    assert len(dp.sub_routers) == 3
+    assert len(dp.sub_routers) == 4
 
 
 def test_start_plan_points_to_same_app(monkeypatch):
@@ -57,7 +57,7 @@ def test_start_plan_points_to_same_app(monkeypatch):
     reset_settings_cache()
     plan = start_reply_plan(Settings(), is_admin=True)
     assert plan["single_bot"] is True
-    assert any(b.get("url", "").endswith("/app/") or "/app/" in b.get("url", "") for b in plan["buttons"])
+    assert any(b.get("url", "").rstrip("/").endswith("/app") or "/app/" in b.get("url", "") for b in plan["buttons"])
     assert any("/admin" in b.get("url", "") for b in plan["buttons"])
     assert "未连接真实 Telegram Bot" in plan["text"]
 

@@ -180,11 +180,18 @@ async def load_actor_memberships(
             await session.execute(select(Group).where(Group.id.in_([m.group_id for m in rows])))
         ).scalars()
     }
-    accessible = [groups[m.group_id] for m in rows if m.group_id in groups]
+    want_fixture = bool(actor.is_demo)
+    accessible = [
+        groups[m.group_id]
+        for m in rows
+        if m.group_id in groups and bool(groups[m.group_id].is_demo_fixture) == want_fixture
+    ]
     admin_groups = [
         groups[m.group_id]
         for m in rows
-        if m.group_id in groups and (membership_is_admin(m) or can_super(actor.role))
+        if m.group_id in groups
+        and bool(groups[m.group_id].is_demo_fixture) == want_fixture
+        and (membership_is_admin(m) or can_super(actor.role))
     ]
     if can_super(actor.role):
         admin_groups = list(accessible)
@@ -235,6 +242,8 @@ async def resolve_group_context(
             raise HTTPException(status_code=403, detail="无权访问该群或群不存在")
 
     if group is not None:
+        if bool(group.is_demo_fixture) != bool(actor.is_demo):
+            raise HTTPException(status_code=403, detail="无权访问该群")
         membership = by_group.get(group.id)
         if membership is None and not is_super:
             raise HTTPException(status_code=403, detail="无权访问该群")

@@ -51,6 +51,10 @@ class Settings(BaseSettings):
     admin_ids: str = ""
     session_secret: str = ""
     preview_access_secret: str = ""
+    # Real-test owner and allowlisted chats come only from env, never committed defaults.
+    owner_telegram_id: str = ""
+    test_chat_ids: str = ""
+    bot_username: str = ""
 
     run_scheduler: bool = False
     seed_demo: bool = True
@@ -71,6 +75,9 @@ class Settings(BaseSettings):
         "admin_ids",
         "session_secret",
         "preview_access_secret",
+        "owner_telegram_id",
+        "test_chat_ids",
+        "bot_username",
         "host",
         "log_level",
         "bot_transport",
@@ -98,14 +105,30 @@ class Settings(BaseSettings):
     def bot_connected(self) -> bool:
         return bool(self.bot_token) and not self.bot_token.startswith("0:")
 
-    @property
-    def resolved_transport(self) -> str:
-        """demo 永远 local；生产默认 dry-run，live 必须显式打开。"""
+    def _normalized_transport(self) -> str:
         raw = (self.bot_transport or "").strip().lower().replace("_", "-")
         if raw in {"dryrun", "dry-run", "dry"}:
-            raw = "dry-run"
-        if self.is_demo or self.is_preview:
+            return "dry-run"
+        if raw in {"live-test"}:
+            return "live"
+        return raw
+
+    @property
+    def resolved_transport(self) -> str:
+        """demo 永远 local；preview 默认 local，显式 live 才出站；生产默认 dry-run。"""
+        raw = self._normalized_transport()
+        if self.is_demo:
             return "local"
+        if self.is_preview:
+            if raw in {"", "local"}:
+                return "local"
+            if raw == "live":
+                return "live"
+            if raw == "dry-run":
+                return "dry-run"
+            raise RuntimeError(
+                "预览模式 HETAI_BOT_TRANSPORT 只能是 local、dry-run 或 live（默认 local，live 需显式配置）"
+            )
         if raw in {"", "dry-run"}:
             return "dry-run"
         if raw in {"local", "live"}:
@@ -133,6 +156,51 @@ class Settings(BaseSettings):
             if part.isdigit() or (part.startswith("-") and part[1:].isdigit()):
                 out.append(int(part))
         return out
+
+    def owner_telegram_id_value(self) -> int | None:
+        raw = (self.owner_telegram_id or "").strip()
+        if raw.isdigit():
+            value = int(raw)
+            return value if value > 0 else None
+        return None
+
+    def is_configured_owner(self, telegram_id: int | None) -> bool:
+        owner = self.owner_telegram_id_value()
+        if owner is None or telegram_id is None:
+            return False
+        try:
+            return int(telegram_id) == owner
+        except (TypeError, ValueError):
+            return False
+
+    def test_chat_id_list(self) -> list[int]:
+        out: list[int] = []
+        for part in (self.test_chat_ids or "").split(","):
+            part = part.strip()
+            if not part:
+                continue
+            if part.isdigit() or (part.startswith("-") and part[1:].isdigit()):
+                out.append(int(part))
+        return out
+
+    def public_webapp_base(self) -> str:
+        return (self.webapp_url or "").rstrip("/")
+
+    def mini_app_url(self) -> str:
+        base = self.public_webapp_base()
+        if self.resolved_transport == "live" and self.bot_connected:
+            if not base:
+                return ""
+            if base.endswith("/app"):
+                base = base[: -len("/app")]
+            if base.endswith("/tg"):
+                return base
+            return base + "/tg"
+        if self.is_demo and not base:
+            return f"http://{self.host}:{self.port}/app"
+        if base.endswith("/app") or base.endswith("/tg"):
+            return base
+        return (base + "/app") if base else ""
 
     def mask_secret(self, value: str) -> str:
         if not value:
@@ -184,6 +252,15 @@ class Settings(BaseSettings):
                 raise RuntimeError("预览模式必须设置足够强度的 HETAI_PREVIEW_ACCESS_SECRET，否则拒绝启动")
             if not is_strong_secret(self.session_secret):
                 raise RuntimeError("预览模式必须设置足够强度的 HETAI_SESSION_SECRET，否则拒绝启动")
+            transport = self.resolved_transport
+            if transport == "live":
+                if not self.bot_connected:
+                    raise RuntimeError("预览 live 测试必须设置真实 HETAI_BOT_TOKEN")
+                if not is_strong_secret(self.webhook_secret):
+                    raise RuntimeError("预览 live 测试必须设置足够强度的 HETAI_WEBHOOK_SECRET")
+                webapp = self.public_webapp_base()
+                if not webapp.startswith("https://"):
+                    raise RuntimeError("预览 live 测试必须设置 https 的 HETAI_WEBAPP_URL")
             return
         # production: fail closed
         if self.mode != "production":

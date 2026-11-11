@@ -99,10 +99,13 @@ def test_start_help_menu_dispatch_local_no_http(demo_client):
     assert "sendMessage" in methods
     assert any("/app" in u for u in _webapp_urls(menu_body["calls"]))
 
-    # 本地会话从未配置 HTTP 客户端；调用列表只来自 LocalNoSendSession。
+    # 本地会话从未配置 HTTP 客户端；调用列表仍来自 LocalNoSendSession（可经出站守卫包装）。
+    from hetai.bot.guard import GuardedSession
     from hetai.bot.session import LocalNoSendSession
 
-    assert isinstance(get_outbound_session(), LocalNoSendSession)
+    session = get_outbound_session()
+    inner = session.inner if isinstance(session, GuardedSession) else session
+    assert isinstance(inner, LocalNoSendSession)
 
 
 def test_start_idempotent_does_not_resend(demo_client):

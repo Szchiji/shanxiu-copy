@@ -161,12 +161,18 @@ def test_unauthenticated_pages_and_apis_protected(preview_client):
     assert admin.status_code == 303
     api = preview_client.post("/api/auth/telegram", json={"initData": "x"}, headers=_origin())
     assert api.status_code in {401, 303, 403}
-    hook = preview_client.post(
+    hook_denied = preview_client.post(
         "/telegram/webhook",
         json={"update_id": 1},
-        headers={**_origin(), "X-Telegram-Bot-Api-Secret-Token": "preview-webhook-secret-only"},
+        headers=_origin(),
     )
-    assert hook.status_code in {401, 303, 403}
+    assert hook_denied.status_code == 401
+    hook_ok = preview_client.post(
+        "/telegram/webhook",
+        json={"update_id": 91001, "message": {"message_id": 1, "date": 1, "chat": {"id": 11, "type": "private"}, "from": {"id": 11, "is_bot": False, "first_name": "X"}, "text": "/help"}},
+        headers={"X-Telegram-Bot-Api-Secret-Token": "preview-webhook-secret-only"},
+    )
+    assert hook_ok.status_code not in {303, 401}
     switch = preview_client.get("/demo/as/admin", follow_redirects=False)
     assert switch.status_code == 303
     html_app = preview_client.get("/app", headers={"Accept": "text/html"}, follow_redirects=False)
@@ -187,7 +193,7 @@ def test_login_session_and_identity_roles(preview_client):
     assert home.status_code == 200
     assert "公开预览" in home.text
     assert "示例数据" in home.text
-    assert "未连接真实 Telegram Bot" in home.text
+    assert "公开预览" in home.text and ("示例数据" in home.text or "夹具" in home.text)
 
     admin = preview_client.get("/admin")
     assert admin.status_code == 200

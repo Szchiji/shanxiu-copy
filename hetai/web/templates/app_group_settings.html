@@ -2,7 +2,7 @@
 {% block content %}
 <h1>群设置</h1>
 {% if context.group %}
-<form class="stack card" method="post" action="/admin/groups/{{ context.group.id }}/settings">
+<form class="stack card" method="post" action="{{ app_root }}/groups/{{ context.group.id }}/settings">
   <label>名称 <input name="title" value="{{ context.group.title }}" required maxlength="128"></label>
   <label>说明 <textarea name="description">{{ context.group.description }}</textarea></label>
   <label class="check"><input type="checkbox" name="is_active" value="1" {% if context.group.is_active %}checked{% endif %}> 启用该群</label>
