@@ -12,7 +12,7 @@ from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse, RedirectResponse, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from hetai.config import Settings, get_settings, is_strong_secret
+from hetai.config import PREVIEW_ACCESS_MIN_LENGTH, Settings, get_settings, is_strong_secret
 
 COOKIE_SESSION = "hetai_preview"
 COOKIE_CSRF = "hetai_csrf"
@@ -186,7 +186,7 @@ def safe_next(value: str | None) -> str:
 
 def verify_preview_password(provided: str, settings: Settings) -> bool:
     expected = settings.preview_access_secret
-    if not is_strong_secret(expected) or not provided:
+    if not is_strong_secret(expected, min_length=PREVIEW_ACCESS_MIN_LENGTH) or not provided:
         return False
     if len(provided) != len(expected):
         # still compare hashes to avoid leaking length via exception

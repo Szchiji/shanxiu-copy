@@ -75,7 +75,7 @@ HETAI_PYTEST=1 pytest tests/hetai -q
 
 独立测试部署使用 `HETAI_MODE=preview`，不是本地 demo，也不是生产。
 
-- 必须设置足够强度的 `HETAI_PREVIEW_ACCESS_SECRET` 与 `HETAI_SESSION_SECRET`，否则拒绝启动。
+- 预览口令 `HETAI_PREVIEW_ACCESS_SECRET` 至少 12 个字符、至少 8 个不同字符，且不能有首尾空白；`HETAI_SESSION_SECRET` 仍须至少 24 个字符、至少 8 个不同字符，且不能有首尾空白。未满足则拒绝启动。
 - 允许绑定 `0.0.0.0`；若环境提供 `PORT` 且未显式设置 `HETAI_PORT`，则使用 `PORT`。
 - 未登录只能访问 `/health`、`/preview/login` 和静态资源。`/health` 只返回 `ok` / `app` / `mode`。
 - 登录页：`GET/POST /preview/login`，字段 `username`（固定 `preview`，可忽略）与 `password`（预览口令），另有隐藏域 `csrf_token`、`next`。

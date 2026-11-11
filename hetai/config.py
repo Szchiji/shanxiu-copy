@@ -8,6 +8,8 @@ from typing import Literal
 from pydantic import Field, field_validator
 
 _WEAK_SECRETS = {"", "change-me", "demo", "secret", "password", "preview", "admin"}
+PREVIEW_ACCESS_MIN_LENGTH = 12
+# Session and other secrets keep the stronger default of 24.
 
 
 def is_strong_secret(value: str, *, min_length: int = 24) -> bool:
@@ -178,7 +180,7 @@ class Settings(BaseSettings):
                 )
             return
         if self.is_preview:
-            if not is_strong_secret(self.preview_access_secret):
+            if not is_strong_secret(self.preview_access_secret, min_length=PREVIEW_ACCESS_MIN_LENGTH):
                 raise RuntimeError("预览模式必须设置足够强度的 HETAI_PREVIEW_ACCESS_SECRET，否则拒绝启动")
             if not is_strong_secret(self.session_secret):
                 raise RuntimeError("预览模式必须设置足够强度的 HETAI_SESSION_SECRET，否则拒绝启动")

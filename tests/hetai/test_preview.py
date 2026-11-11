@@ -9,7 +9,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from hetai.bot.runtime import reset_runtime
-from hetai.config import Settings, reset_settings_cache
+from hetai.config import PREVIEW_ACCESS_MIN_LENGTH, Settings, is_strong_secret, reset_settings_cache
 
 
 STRONG_ACCESS = "preview-access-secret-9f3c-OK"
@@ -93,6 +93,35 @@ def test_preview_boot_rejects_missing_or_weak_secret(monkeypatch):
         Settings().validate_boot()
     monkeypatch.setenv("HETAI_PREVIEW_ACCESS_SECRET", STRONG_ACCESS)
     monkeypatch.setenv("HETAI_SESSION_SECRET", "demo")
+    reset_settings_cache()
+    with pytest.raises(RuntimeError, match="SESSION_SECRET"):
+        Settings().validate_boot()
+    reset_settings_cache()
+
+
+def test_preview_access_secret_accepts_12_char_policy(monkeypatch):
+    monkeypatch.setenv("HETAI_MODE", "preview")
+    monkeypatch.setenv("HETAI_HOST", "0.0.0.0")
+    monkeypatch.setenv("HETAI_SESSION_SECRET", STRONG_SESSION)
+    # 11 chars, 11 distinct: too short for preview access
+    monkeypatch.setenv("HETAI_PREVIEW_ACCESS_SECRET", "abcd1234wxy")
+    reset_settings_cache()
+    with pytest.raises(RuntimeError, match="PREVIEW_ACCESS_SECRET"):
+        Settings().validate_boot()
+    # 12 chars but only 2 distinct
+    monkeypatch.setenv("HETAI_PREVIEW_ACCESS_SECRET", "aaaaaaaabbbb")
+    reset_settings_cache()
+    with pytest.raises(RuntimeError, match="PREVIEW_ACCESS_SECRET"):
+        Settings().validate_boot()
+    # leading/trailing whitespace is rejected by the policy function
+    assert is_strong_secret(" abcd1234wxyz", min_length=PREVIEW_ACCESS_MIN_LENGTH) is False
+    assert is_strong_secret("abcd1234wxyz ", min_length=PREVIEW_ACCESS_MIN_LENGTH) is False
+    # 12 chars, 12 distinct, no outer whitespace: accepted for access secret
+    monkeypatch.setenv("HETAI_PREVIEW_ACCESS_SECRET", "abcd1234wxyz")
+    reset_settings_cache()
+    Settings().validate_boot()
+    # session secret still requires 24, not the preview-access 12
+    monkeypatch.setenv("HETAI_SESSION_SECRET", "abcd1234wxyz")
     reset_settings_cache()
     with pytest.raises(RuntimeError, match="SESSION_SECRET"):
         Settings().validate_boot()
