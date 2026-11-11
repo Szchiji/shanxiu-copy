@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>月影车姬</title>
+  <link rel="preconnect" href="https://telegram.org" />
+  <!-- defer: the boot card paints without waiting for telegram.org; script order is unchanged -->
+  <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
+  <!-- all page CSS, same order as before: styles, home-fix, home-inline, theme-emerald, status-badge, hours, area-filter (scripts/build_miniapp.py) -->
+  <link rel="stylesheet" href="./app.bundle.css?v=20261112b" />
+</head>
+<body>
+  <div id="toast" class="toast hidden"></div>
+  <section id="boot" class="boot">
+    <div class="boot-card">
+      <h1>月影车姬</h1>
+      <p id="bootMsg" class="muted">正在连接…</p>
+      <button id="bootRetry" class="btn primary block hidden" type="button">重试</button>
+    </div>
+  </section>
+  <section id="gate" class="gate hidden" aria-hidden="true"></section>
+  <div id="app" class="hidden">
+    <header class="topbar topbar-3">
+      <button id="hubHomeEntry" class="top-admin" data-hub="community" type="button">本城社区</button>
+      <a id="brandTitle" class="brand">月影车姬</a>
+      <div class="city-wrap">
+        <button id="btnCity" class="chip" type="button">城市 ▾</button>
+        <div id="cityDrop" class="city-drop hidden"></div>
+      </div>
+    </header>
+    <div id="topMeta" class="top-meta muted hidden"></div>
+    <main id="main">
+      <section id="view-home" class="view">
+        <div id="pins" class="pins"></div>
+        <div id="announce" class="announce hidden"></div>
+        <div class="search-row">
+          <input id="homeQ" maxlength="64" placeholder="搜花名、标签、城区、价位" />
+          <button class="btn" id="btnSearch" type="button">搜索</button>
+        </div>
+        <div id="feedSplit" aria-hidden="true"></div>
+        <div id="feed" class="feed feed-3"></div>
+        <button id="btnLoadMore" class="btn block hidden" type="button">加载更多</button>
+      </section>
+      <section id="view-fav" class="view hidden">
+        <div class="card"><h3>我的收藏</h3><div id="favList"></div></div>
+      </section>
+      <section id="view-publish" class="view hidden">
+        <form id="publishForm" class="card form">
+          <h3 id="publishTitle">上架</h3>
+          <label>相册</label>
+          <input id="pubFiles" type="file" accept="image/*,video/*" multiple />
+          <div id="pubPreview" class="media-preview"></div>
+          <label>称呼</label>
+          <input id="pubTitle" required maxlength="64" />
+          <label>城市</label>
+          <select id="pubCity" required></select>
+          <label>简介</label>
+          <textarea id="pubDesc" rows="3" maxlength="2000"></textarea>
+          <details class="advanced">
+            <summary>更多选填</summary>
+            <input id="pubPrice" placeholder="价位" />
+            <input id="pubDistrict" placeholder="区" />
+            <input id="pubApprox" placeholder="大致位置" />
+            <input id="pubTags" placeholder="标签" />
+          </details>
+          <button class="btn primary block big" type="submit">提交审核</button>
+        </form>
+      </section>
+      <section id="view-me" class="view hidden">
+        <div id="meCard" class="card"></div>
+        <div class="card">
+          <h3>我的昵称</h3>
+          <div class="row">
+            <input id="guestNick" maxlength="16" style="flex:1;margin:0" />
+            <button class="btn" id="btnSaveNick" type="button">保存</button>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <button class="btn" data-switch="guest" type="button">客人</button>
+            <button class="btn" data-switch="teacher" type="button">老师</button>
+            <button class="btn" data-switch="merchant" type="button">商家</button>
+          </div>
+        </div>
+        <div class="card">
+          <h3>我的评价</h3>
+          <div id="myReviews"></div>
+        </div>
+        <div class="card hints">
+          <div id="adminEntry" class="hidden">
+            <a class="btn primary" href="./desk.html?v=20261101a">管理后台</a>
+          </div>
+        </div>
+      </section>
+      <section id="view-detail" class="view hidden">
+        <button class="btn ghost" id="btnBackHome" type="button">← 返回</button>
+        <div id="detail"></div>
+      </section>
+      <section id="view-review" class="view hidden">
+        <form id="reviewForm" class="card form">
+          <h3>提交评价</h3>
+          <input type="hidden" id="revLampId" />
+          <input id="revStars" type="number" min="1" max="5" value="5" required />
+          <textarea id="revText" rows="3"></textarea>
+          <button class="btn primary block" type="submit">提交评价</button>
+        </form>
+      </section>
+    </main>
+    <nav class="bottom-nav nav-3">
+      <button data-nav="home" class="nav-item active" type="button"><span>首页</span></button>
+      <button data-nav="fav" class="nav-item hidden" type="button"><span>收藏</span></button>
+      <button data-nav="publish" class="nav-item" type="button"><span>上架</span></button>
+      <button data-nav="me" class="nav-item" type="button"><span>我的</span></button>
+    </nav>
+  </div>
+  <div id="citySheet" class="sheet hidden"><div class="sheet-panel"><h3>选择城市</h3><div id="cityList"></div><button class="btn block" id="cityClose" type="button">关闭</button></div></div>
+  <!-- all page scripts, same order as before (scripts/build_miniapp.py); each one still isolated by try/catch -->
+  <script src="./app.bundle.js?v=20261112b" defer></script>
+</body>
+</html>

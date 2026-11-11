@@ -1,0 +1,101 @@
+/* 优惠券 — 墨绿金. Card badge is an inline pill in the title row (same as 置顶): no size/grid change. */
+.feed-card .badge-cpn{display:inline-block;margin-right:4px;padding:0 5px;border-radius:6px;background:transparent;border:1px solid var(--t-accent,#D4B26A);color:var(--t-accent,#D4B26A);font-size:11px;line-height:16px;font-weight:700;vertical-align:1px;}
+.cpn-block{order:4;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:8px 0;padding:10px 12px;border-radius:12px;border:1px dashed var(--t-accent,#D4B26A);background:linear-gradient(90deg,rgba(212,178,106,.16),rgba(212,178,106,.04));}
+.cpn-l{display:flex;align-items:center;gap:10px;min-width:0;flex:1;}
+.cpn-l b{display:block;color:var(--t-price,#F0C987);font-size:15px;word-break:break-all;}
+.cpn-l small{display:block;color:var(--t-muted,#B4BCAF);font-size:12px;margin-top:2px;}
+.cpn-tag{flex:none;display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:8px;background:var(--t-goldbg,#D4B26A);color:var(--t-goldtext,#13241F);font-weight:800;font-size:14px;}
+.cpn-claim{min-width:76px;}
+.cpn-code{display:flex;flex-direction:column;align-items:flex-end;}
+.cpn-code span{font-size:11px;color:var(--t-muted,#B4BCAF);}
+.cpn-code b{font-family:ui-monospace,Menlo,monospace;font-size:18px;letter-spacing:2px;color:var(--t-link,#E5CC8E);}
+.cpn-code i{font-style:normal;font-size:11px;color:var(--t-muted,#B4BCAF);}
+.cpn-own,.cpn-off{font-size:12px;color:var(--t-muted,#B4BCAF);}
+.cpn-tip{width:100%;margin:2px 0 0;font-size:12px;color:var(--t-muted,#B4BCAF);}
+.cpn-card input{width:100%;box-sizing:border-box;}
+.cpn-row{display:flex;align-items:center;gap:8px;margin:10px 0;flex-wrap:wrap;}
+.cpn-row>span{width:48px;color:var(--t-muted,#B4BCAF);font-size:13px;}
+.cpn-row input{flex:1;width:auto;margin:0;}
+.cpn-row em{font-style:normal;color:var(--t-muted,#B4BCAF);}
+.cpn-lead{margin:0 0 10px;font-size:13px;line-height:1.5;}
+.cpn-sub{margin:10px 0 6px;font-size:12px;color:var(--t-muted,#B4BCAF);}
+.cpn-claims,.cpn-mine,.cpn-list{list-style:none;margin:0;padding:0;}
+.cpn-claims li{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--t-line,#2A4A42);}
+.cpn-claims li b{font-family:ui-monospace,Menlo,monospace;letter-spacing:1px;color:var(--t-link,#E5CC8E);}
+.cpn-claims li span{flex:1;color:var(--t-text,#F1EEE4);font-size:13px;}
+.cpn-mine li,.cpn-list li{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--t-line,#2A4A42);cursor:pointer;}
+.cpn-mine li div,.cpn-list li div{flex:1;min-width:0;}
+.cpn-mine b,.cpn-list b{display:block;color:var(--t-text,#F1EEE4);font-size:14px;}
+.cpn-list b i{font-style:normal;font-weight:400;margin-left:6px;font-size:12px;color:var(--t-muted,#B4BCAF);}
+.cpn-mine li div>span,.cpn-list li div>span{display:block;color:var(--t-price,#F0C987);font-size:13px;}
+.cpn-mine small,.cpn-list small{display:block;color:var(--t-muted,#B4BCAF);font-size:12px;}
+.cpn-mine code{font-size:16px;letter-spacing:2px;color:var(--t-link,#E5CC8E);padding:4px 8px;border:1px solid var(--t-accent,#D4B26A);border-radius:8px;}
+.cpn-mine code.used{opacity:.5;text-decoration:line-through;}
+.cpn-list em{font-style:normal;color:var(--t-muted,#B4BCAF);font-size:18px;}
+.cpn-copy{margin-top:4px;padding:3px 10px;border-radius:999px;border:1px solid var(--t-accent,#D4B26A);background:transparent;color:var(--t-link,#E5CC8E);font-size:12px;}
+.cpn-mc{display:flex;flex-direction:column;align-items:flex-end;gap:2px;}
+.cpn-find{display:flex;gap:8px;margin:10px 0 4px;}
+.cpn-find input{flex:1;margin:0;text-transform:uppercase;letter-spacing:2px;}
+.cpn-find-r{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:6px 0 4px;padding:8px 10px;border-radius:10px;background:rgba(212,178,106,.10);}
+.cpn-find-r b{font-family:ui-monospace,Menlo,monospace;letter-spacing:2px;color:var(--t-link,#E5CC8E);}
+.cpn-find-r span{flex:1;font-size:13px;color:var(--t-text,#F1EEE4);}
+.cpn-flash{animation:cpnFlash 1.2s ease 2;}
+@keyframes cpnFlash{50%{box-shadow:0 0 0 3px rgba(212,178,106,.55);}}
+.cpn-fold{margin:8px 0 0;border-top:1px solid var(--t-line,#2A4A42);}
+.cpn-fold-h{display:flex;align-items:center;gap:8px;width:100%;min-height:40px;padding:0;border:0;background:none;color:var(--t-muted,#B4BCAF);font-size:13px;text-align:left;}
+.cpn-fold-h span{flex:1;}
+.cpn-fold-h span small{font-size:11px;opacity:.8;margin-left:4px;}
+.cpn-fold-h b{min-width:22px;padding:0 7px;border-radius:999px;font-size:12px;line-height:20px;text-align:center;color:var(--t-pilltext,#E5CC8E);background:var(--t-pill,#24463E);}
+.cpn-fold-h i{font-style:normal;font-size:18px;transition:transform .15s;}
+.cpn-fold.open > .cpn-fold-h i{transform:rotate(90deg);}
+.cpn-fold:not(.open) > .cpn-fold-b{display:none;}
+.cpn-claims li.done b,.cpn-mine li.done code{opacity:.55;}
+.cpn-mine li.done b,.cpn-mine li.done span{opacity:.7;}
+.cpn-hist{margin:6px 0 10px;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid var(--t-line,#2A4A42);}
+.cpn-hist-h b{display:block;font-size:14px;color:var(--t-text,#F1EEE4);}
+.cpn-hist-h small{font-size:12px;color:var(--t-muted,#B4BCAF);}
+.cpn-done{font-style:normal;font-size:12px;color:var(--t-muted,#B4BCAF);}
+/* 一批多项：详情页每项一行（剩几张 / 领取 / 我的券码） */
+.cpn-block.multi{flex-direction:column;align-items:stretch;gap:6px;}
+.cpn-its{list-style:none;margin:0;padding:0;}
+.cpn-its li{display:flex;align-items:center;gap:10px;min-height:40px;padding:6px 0;border-top:1px dashed rgba(212,178,106,.35);}
+.cpn-its li>div:first-child{flex:1;min-width:0;}
+.cpn-its li b{color:var(--t-price,#F0C987);font-size:15px;word-break:break-all;}
+.cpn-its li small{margin-left:6px;color:var(--t-muted,#B4BCAF);font-size:12px;white-space:nowrap;}
+.cpn-its li.off b{opacity:.55;text-decoration:line-through;}
+.cpn-its .cpn-code{flex-direction:row;align-items:center;gap:6px;}
+.cpn-its .cpn-code b{font-size:15px;color:var(--t-link,#E5CC8E);text-decoration:none;opacity:1;}
+.cpn-its .cpn-copy{margin-top:0;}
+.cpn-its .cpn-claim{min-width:64px;min-height:32px;padding:4px 12px;}
+/* 老师发布表单：步骤 / 已添加列表 / 按钮 */
+.cpn-step{display:flex;align-items:center;gap:8px;margin:12px 0 4px;font-size:14px;color:var(--t-text,#F1EEE4);}
+.cpn-step i{font-style:normal;display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--t-goldbg,#D4B26A);color:var(--t-goldtext,#13241F);font-size:12px;font-weight:800;}
+.cpn-step span{font-weight:700;}
+.cpn-step small{margin-left:auto;font-size:12px;color:var(--t-muted,#B4BCAF);}
+.cpn-days{margin:6px 0 4px;}
+.cpn-items{list-style:none;margin:6px 0 0;padding:0;}
+.cpn-items li{display:flex;align-items:center;gap:8px;padding:8px 10px;margin:6px 0;border-radius:10px;border:1px solid var(--t-line,#2A4A42);background:rgba(212,178,106,.07);}
+.cpn-items li.on{border-color:var(--t-accent,#D4B26A);}
+.cpn-items li i{font-style:normal;font-size:12px;color:var(--t-muted,#B4BCAF);width:14px;}
+.cpn-items li b{flex:1;min-width:0;color:var(--t-price,#F0C987);font-size:14px;word-break:break-all;}
+.cpn-items li span{font-size:13px;color:var(--t-text,#F1EEE4);white-space:nowrap;}
+.cpn-mini{padding:3px 9px;border-radius:999px;border:1px solid var(--t-line,#2A4A42);background:transparent;color:var(--t-link,#E5CC8E);font-size:12px;}
+.cpn-mini.del{color:var(--t-muted,#B4BCAF);}
+.cpn-editor{margin-top:8px;padding:10px 12px 2px;border-radius:12px;border:1px dashed var(--t-accent,#D4B26A);}
+.cpn-editor .cpn-sub{margin:0 0 8px;}
+.cpn-btns{display:flex;gap:10px;margin:12px 0 0;}
+.cpn-btns .btn{flex:1;min-height:44px;}
+/* 老师已发布：每项一个小节 */
+.cpn-item{margin:8px 0 0;padding:8px 0 0;border-top:1px solid var(--t-line,#2A4A42);}
+.cpn-item-h{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;}
+.cpn-item-h b{color:var(--t-price,#F0C987);font-size:15px;}
+.cpn-item-h small{font-size:12px;color:var(--t-muted,#B4BCAF);}
+.cpn-item .cpn-claims li:first-child{border-top:0;}
+.cpn-empty{margin:4px 0 0;font-size:12px;}
+.cpn-hist .cpn-item{margin-top:6px;}
+/* 每批每人限领 1 张 */
+.cpn-note{margin:0;font-size:12px;color:var(--t-link,#E5CC8E);}
+.cpn-note.got{color:var(--t-muted,#B4BCAF);}
+.cpn-its li.dim b{opacity:.55;}
+.cpn-its .cpn-claim[disabled]{opacity:.45;background:transparent;border:1px solid var(--t-line,#2A4A42);color:var(--t-muted,#B4BCAF);}
+.cpn-its li.mine b{color:var(--t-price,#F0C987);}

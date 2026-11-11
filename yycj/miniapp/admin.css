@@ -1,0 +1,220 @@
+:root {
+  --ad-bg: #0b0f18;
+  --ad-card: #171e2c;
+  --ad-line: #2a3348;
+  --ad-text: #e8eef8;
+  --ad-mute: #8b97ad;
+  --ad-accent: #6ea8ff;
+  --ad-ok: #3dd68c;
+  --ad-bad: #ff7a9c;
+  --ad-side: 168px;
+  --ad-top: 56px;
+}
+html, body.admin-body {
+  height: auto !important; max-height: none !important;
+  overflow: auto !important; overflow-y: scroll !important;
+  -webkit-overflow-scrolling: touch !important;
+  background: var(--ad-bg); color: var(--ad-text);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Noto Sans SC", sans-serif;
+}
+/* Sticky needs the document (html) to be the scroller: body must not be its own
+   overflow container, otherwise the topbar scrolls away with the page. */
+body.admin-body { overflow: visible !important; }
+.admin-body .topbar {
+  position: sticky; position: -webkit-sticky; top: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; padding: 10px 12px;
+  padding-top: max(10px, env(safe-area-inset-top));
+  background: rgba(11,15,24,.92);
+  border-bottom: 1px solid var(--ad-line);
+}
+.admin-body .topbar h1 { margin: 0; font-size: 16px; font-weight: 650; }
+.admin-body .topbar .muted { font-size: 11px; color: var(--ad-mute); }
+.admin-crumb { font-size: 12px; color: var(--ad-mute); margin-top: 2px; }
+#btnMenu {
+  width: 36px; height: 36px; border-radius: 10px;
+  border: 1px solid var(--ad-line); background: var(--ad-card); color: var(--ad-text);
+}
+.admin-shell { display: flex !important; min-height: calc(100dvh - var(--ad-top)); height: auto !important; overflow: visible !important; }
+.admin-side {
+  position: fixed; left: -200px; top: var(--ad-top); bottom: 0; z-index: 200;
+  width: var(--ad-side); padding: 14px 10px;
+  background: #0e1420; border-right: 1px solid var(--ad-line);
+  transition: left .2s ease; overflow: auto;
+}
+body.side-open .admin-side { left: 0; }
+.admin-side .side-label {
+  font-size: 11px; color: var(--ad-mute); letter-spacing: .08em;
+  margin: 8px 8px 8px;
+}
+.admin-side button {
+  display: flex; width: 100%; margin: 0 0 4px; padding: 9px 10px;
+  text-align: left; border: 0; border-radius: 10px;
+  background: transparent; color: #c9d4e8; font-size: 14px;
+}
+.admin-side button.active { background: #1b2740; color: #fff; box-shadow: inset 0 0 0 1px #2e4a78; }
+.admin-main { flex: 1; min-width: 0; padding: 14px 14px 88px; }
+.admin-pane { display: none; }
+.admin-pane.active { display: block; }
+.admin-pane > h3 { margin: 0 0 12px; font-size: 18px; font-weight: 650; }
+.ops-card, .admin-pane .card, #proxyBox, #editBox {
+  background: var(--ad-card); border: 1px solid var(--ad-line);
+  border-radius: 14px; padding: 14px; margin: 0 0 12px;
+}
+.ops-card h4 { margin: 0 0 10px; font-size: 13px; font-weight: 650; color: var(--ad-accent); }
+.admin-body label { display: block; margin: 10px 0 4px; font-size: 12px; color: var(--ad-mute); }
+.admin-body input, .admin-body textarea, .admin-body select {
+  width: 100%; box-sizing: border-box;
+  background: #0f1522; color: var(--ad-text);
+  border: 1px solid var(--ad-line); border-radius: 10px; padding: 9px 10px; font-size: 14px;
+}
+.admin-body .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.admin-body .row > input { flex: 1; min-width: 0; margin: 0; }
+.admin-body .btn, .admin-body button.btn {
+  border-radius: 10px; padding: 8px 12px; font-size: 13px;
+  border: 1px solid var(--ad-line); background: #1a2233; color: var(--ad-text);
+}
+.admin-body .btn.primary { background: var(--ad-accent); color: #081018; border: 0; font-weight: 650; }
+.admin-body .btn.danger { background: #3a1524; color: #ffb4c8; border-color: #6b2740; }
+.side-mask { display: none; }
+body.side-open .side-mask {
+  display: block; position: fixed; inset: var(--ad-top) 0 0 0;
+  background: rgba(0,0,0,.4); z-index: 180;
+}
+.pick-item {
+  display: grid; grid-template-columns: 1fr; gap: 8px;
+  margin: 0 0 10px; padding: 12px;
+  border: 1px solid var(--ad-line); border-radius: 14px; background: var(--ad-card);
+}
+.pick-item .muted { color: var(--ad-mute); font-size: 12px; }
+.st-badge { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px; font-size: 11px; }
+.st-active { background: #163528; color: var(--ad-ok); }
+.st-hidden { background: #3a1524; color: var(--ad-bad); }
+.admin-thumb, .up-thumb { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; }
+#gate.card { margin: 16px; }
+@media (min-width: 860px) {
+  .admin-side { left: 0; }
+  .admin-main { margin-left: var(--ad-side); }
+  body.side-open .side-mask { display: none; }
+  #btnMenu { display: none; }
+  .pick-item { grid-template-columns: 1fr auto; align-items: center; }
+}
+/* 优惠券 (admin-coupons.js) */
+.cpn-admin .cpn-a-it{white-space:nowrap;line-height:1.6;}
+.cpn-admin .cpn-a-it .muted{font-weight:400;font-size:12px;}
+.cpn-admin .cpn-a-wrap{overflow-x:auto;}
+.cpn-admin .cpn-a-table{width:100%;border-collapse:collapse;font-size:13px;}
+.cpn-admin .cpn-a-table th,.cpn-admin .cpn-a-table td{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.08);text-align:left;vertical-align:top;}
+.cpn-admin .cpn-a-text{color:#E5CC8E;font-weight:600;}
+.cpn-admin .cpn-a-all{display:inline-flex!important;align-items:center;gap:6px;margin:4px 0 8px;font-size:13px;width:auto!important;}
+.cpn-admin .cpn-a-all input{width:auto!important;margin:0;}
+
+/* Listing cards on 上架资料: stack meta, status, and actions. The desktop
+   1fr/auto pick-item grid plus overflow-wrap:anywhere was shrinking
+   .edit-result to a 1–2 character column. */
+#adminListings > .pick-item,
+.workspace-body #workspaceLegacy #adminListings > .pick-item {
+  display: flex !important;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: visible;
+}
+#adminListings .edit-result,
+.workspace-body #workspaceLegacy #adminListings .edit-result {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  margin-top: 0;
+  grid-column: 1 / -1;
+}
+#adminListings .edit-result p,
+#adminListings .edit-result strong,
+#adminListings .edit-result a {
+  overflow-wrap: break-word;
+  word-break: normal;
+  white-space: normal;
+}
+#adminListings .listing-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 10px;
+  width: 100%;
+  margin-top: 2px;
+  padding-top: 12px;
+  border-top: 1px solid var(--ad-line);
+  position: relative;
+}
+#adminListings .listing-actions > .btn,
+#adminListings .listing-more > summary {
+  min-height: 44px;
+  min-width: 44px;
+  flex: 1 1 136px;
+  padding: 0 14px;
+  font-size: 14px;
+  line-height: 1.2;
+  white-space: nowrap;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+#adminListings .listing-actions > .btn.danger {
+  flex: 1 1 112px;
+}
+#adminListings .listing-more {
+  position: static;
+  flex: 1 1 112px;
+  min-width: 0;
+}
+#adminListings .listing-more > summary {
+  list-style: none;
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid var(--ad-line);
+  background: #1a2233;
+  color: var(--ad-text);
+}
+#adminListings .listing-more > summary::-webkit-details-marker,
+#adminListings .listing-more > summary::marker { display: none; content: none; }
+#adminListings .listing-more-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 12;
+  min-width: 168px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 12px;
+  border: 1px solid var(--ad-line);
+  background: var(--ad-card);
+  box-shadow: 0 10px 28px rgba(0,0,0,.4);
+}
+#adminListings .pick-item:has(.listing-more[open]),
+.workspace-body #workspaceLegacy #adminListings .pick-item:has(.listing-more[open]) {
+  z-index: 6;
+  padding-bottom: 176px;
+}
+#adminListings .listing-more-menu .btn {
+  width: 100%;
+  min-height: 44px;
+  margin: 0;
+  justify-content: center;
+  white-space: nowrap;
+}
+@media (max-width: 760px) {
+  #adminListings .listing-actions > .btn,
+  #adminListings .listing-more {
+    flex: 1 1 calc(50% - 10px);
+  }
+}

@@ -1,0 +1,16 @@
+/* 首页 / 详情 营业状态：黄铜书签角标（墨绿金）。只改角标本身，不动卡片尺寸。 */
+html body #feed .feed-card .muted.price{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+html body .st-hours{color:var(--t-muted);}
+html body .badge-open{position:absolute!important;top:7px;left:0;z-index:3;display:inline-flex;align-items:center;padding:1px 8px 1px 6px;border-radius:0 8px 8px 0;font-size:9px;line-height:14px;font-weight:700;letter-spacing:.3px;color:#13241F;background:linear-gradient(90deg,#C9A45C,#E3C88A);box-shadow:0 1px 4px rgba(0,0,0,.35);pointer-events:none;}
+html body .badge-open.st-rest{color:#D4D8D0;background:rgba(20,32,29,.78);box-shadow:none;font-weight:600;}
+html body .badge-open.st-wait{color:#E5CC8E;background:rgba(15,36,32,.78);box-shadow:inset 0 0 0 1px rgba(212,178,106,.6);font-weight:600;}
+html body #pins .pin-card .badge-open{display:none!important;}
+html body #view-detail.xhs .xhs-open{padding:3px 10px!important;border-radius:4px 10px 10px 4px;font-size:12px;font-weight:700;letter-spacing:.3px;color:#13241F!important;background:linear-gradient(90deg,#C9A45C,#E3C88A);border:0!important;}
+html body #view-detail.xhs .xhs-open[data-code=rest]{color:#C9CFC6!important;background:rgba(255,255,255,.06);font-weight:600;}
+html body #view-detail.xhs .xhs-open[data-code=wait]{color:#E5CC8E!important;background:transparent;box-shadow:inset 0 0 0 1px rgba(212,178,106,.6);font-weight:600;}
+html body .badge-open.st-closed{color:#D4D8D0;background:rgba(20,32,29,.78);box-shadow:none;font-weight:600;}
+html body #view-detail.xhs .xhs-open[data-code=closed]{color:#C9CFC6!important;background:rgba(255,255,255,.06);font-weight:600;}
+/* 收藏只在详情页：卡片不再有爱心，营业状态书签放到原爱心的位置（左上角） */
+html body #feed .feed-card .fav-btn{display:none!important;}
+html body #feed .feed-card .badge-open{padding:1px 6px 1px 4px;letter-spacing:0;}
+html body #feed .feed-card .badge-loc{max-width:calc(100% - 50px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:2px 5px;letter-spacing:-.2px;}

@@ -1,0 +1,94 @@
+/* ===== Admin button-layout proposal (branch only, not deployed) ===== */
+/* 1. Tap targets ≥ 44px everywhere inside panes */
+.admin-pane .btn, .admin-pane button.btn, .admin-pane a.btn { min-height: 44px; padding-top: 0; padding-bottom: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 15px; border-radius: 12px; }
+.admin-pane input:not([type=checkbox]):not([type=file]), .admin-pane select { min-height: 44px; font-size: 15px; }
+#adminSide button { min-height: 44px; }
+
+/* 2. One consistent action row per item: [危险(描边)] ……空隙…… [次要] [主要] */
+.act-row { display: flex !important; flex-wrap: wrap !important; align-items: center; gap: 8px; margin-top: 12px !important; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.07); width: 100%; }
+.act-row > .a-danger { order: 0; }
+.act-row > .a-gap { order: 1; flex: 1 1 0; min-width: 0; height: 0; }
+.act-row > .a-sec { order: 2; }
+.act-row > .a-primary { order: 3; min-width: 96px; font-weight: 700; }
+.act-row .btn.danger, .pick-actions .btn.danger { background: transparent !important; border: 1px solid rgba(243,18,96,.55) !important; color: #ff8fab !important; }
+.act-row > .ad-more > .btn { min-height: 44px; }
+
+/* 3. 待审资料卡: media as a compact strip, pin as a toggle next to 通过 */
+.media-strip { display: flex; gap: 6px; overflow-x: auto; margin: 8px 0 2px; scrollbar-width: none; }
+.media-strip::-webkit-scrollbar { display: none; }
+.media-strip > img, .media-strip > .vtile { flex: 0 0 72px; width: 72px !important; height: 72px !important; max-width: none !important; margin: 0 !important; border-radius: 10px !important; object-fit: cover; background: #111; }
+.media-strip > .vtile { position: relative; overflow: hidden; border: 0; padding: 0; }
+.media-strip > .vtile video { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
+.media-strip > .vtile::after { content: "▶"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #fff; background: rgba(0,0,0,.3); font-size: 18px; }
+.pin-toggle { display: flex !important; align-items: center; justify-content: space-between; gap: 10px; min-height: 44px; margin: 10px 0 0; padding: 0 12px; border-radius: 12px; background: rgba(255,255,255,.04); font-size: 14px; color: #c9d1f2; }
+.post-card .card-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.post-card .edit-diff { margin: 0; }
+
+/* 4. Switch-style checkboxes (settings rows + pin toggle) */
+.admin-pane input.sw, #pane-venue label.row > input[type=checkbox] { -webkit-appearance: none; appearance: none; flex: 0 0 46px; width: 46px; height: 28px; border-radius: 14px; background: #2a3352; position: relative; margin: 0; transition: background .15s; cursor: pointer; }
+.admin-pane input.sw::after, #pane-venue label.row > input[type=checkbox]::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 11px; background: #fff; transition: left .15s; }
+.admin-pane input.sw:checked, #pane-venue label.row > input[type=checkbox]:checked { background: #3dd68c; }
+.admin-pane input.sw:checked::after, #pane-venue label.row > input[type=checkbox]:checked::after { left: 21px; }
+#pane-venue label.row { display: flex !important; flex-direction: row-reverse; justify-content: space-between; align-items: center; min-height: 48px; margin: 6px 0 0; padding: 0 2px; font-size: 15px; color: #e8ecff; width: 100%; }
+
+/* 5. Settings: the save bar is always visible on 站点设置 (reuses #adSaveBar), shows dirty state */
+#pane-venue.active { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
+body.pane-venue #adSaveBar.hidden { display: flex !important; }
+#adSaveBar { padding: 10px 14px calc(10px + env(safe-area-inset-bottom)) !important; background: rgba(11,16,32,.96) !important; border-top: 1px solid rgba(255,255,255,.08) !important; }
+#adSaveBar > span { font-size: 13px; color: #9aa3c7; }
+#adSaveBar.is-dirty > span { color: #f5a524; font-weight: 600; }
+#adSaveBar #adSaveNow { min-height: 44px; min-width: 140px; border-radius: 12px; }
+#btnOpsSave.pp-hidden, .pp-hidden { display: none !important; }
+
+/* 6. 卡片置顶 / 精选轮播: search result = name row + [有效小时][按钮] row (no overlap) */
+.pick-item.pick-add { display: grid !important; grid-template-columns: 1fr auto; grid-template-areas: "meta meta" "hrs btn"; gap: 8px; align-items: center; }
+.pick-item.pick-add > .meta { grid-area: meta; }
+.pick-item.pick-add > .hrs { grid-area: hrs; width: 100% !important; min-width: 0; }
+.pick-item.pick-add > .btn { grid-area: btn; min-width: 96px; }
+.pick-now .pick-actions .btn { min-width: 88px; }
+
+/* 6b. list items with an action row: info on top, actions underneath (never overflow sideways) */
+.pick-item.stack { display: block !important; }
+.pick-item.stack > .act-row { margin-top: 10px !important; padding-top: 10px; }
+
+/* 8. Listings: list first; the two forms folded below */
+details.fold { margin: 12px 0 0; border-radius: 14px; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.07); }
+details.fold > summary { min-height: 48px; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; font-weight: 600; list-style: none; cursor: pointer; }
+details.fold > summary::-webkit-details-marker { display: none; }
+details.fold > summary::after { content: "展开"; font-size: 12px; font-weight: 400; color: #9aa3c7; }
+details.fold[open] > summary::after { content: "收起"; }
+details.fold > .card { margin: 0; border: 0; background: none; }
+details.fold > .card > h3:first-child { display: none; }
+
+/* 9. Full-width primary for single-submit forms */
+#adjForm button[type=submit], #btnSaveOps, #btnProxy, #editBox .btn.primary { width: 100%; margin-top: 12px; }
+
+/* 10. Breathing room between a search row and its results */
+#adminListings, #feedPinResults, #pinResults, #adminUsers { margin-top: 10px; }
+#adminListings > .pick-item, #feedPinResults > .pick-item, #pinResults > .pick-item, #adminUsers > .pick-item { margin-bottom: 10px; }
+
+/* 11. Unified list-row action bar: [危险 左] … [更多 ⋯] [主操作 右] */
+.lb-host.pick-item { display: block !important; }
+.lb-host.pick-now { display: grid !important; grid-template-columns: auto minmax(0,1fr); align-items: center; column-gap: 12px; }
+.lb-host.pick-now > .lbar { grid-column: 1 / -1; }
+.lbar { display: flex; flex-wrap: nowrap; align-items: center; gap: 8px; width: 100%; flex: 0 0 100%; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.07); }
+.lbar > .btn, .lbar .lb-more { flex: 0 0 auto; min-height: 44px !important; height: 44px; padding: 0 16px !important; margin: 0 !important; border-radius: 12px; font-size: 15px; white-space: nowrap; }
+.lbar > .lb-gap { flex: 1 1 auto; min-width: 0; }
+.lbar > .lb-danger { min-width: 88px; background: transparent !important; border: 1px solid rgba(243,18,96,.6) !important; color: #ff8fab !important; }
+.lbar > .lb-main { min-width: 104px; font-weight: 700; }
+.lbar > .lb-main:not(.primary):not(.danger) { background: #7aa2ff !important; color: #081018 !important; border-color: transparent !important; }
+.lbar .lb-more { background: rgba(255,255,255,.06) !important; border: 1px solid rgba(255,255,255,.12) !important; color: #e8ecff !important; }
+.lbar .lb-more i { font-style: normal; margin-left: 4px; letter-spacing: 1px; }
+.lb-store { display: none !important; }
+.lb-sheet { position: fixed; inset: 0; z-index: 120; background: rgba(0,0,0,.5); display: flex; align-items: flex-end; }
+.lb-sheet.hidden { display: none; }
+.lb-sheet .lb-card { width: 100%; background: #151b2f; border-radius: 16px 16px 0 0; padding: 12px 14px calc(14px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 8px; }
+.lb-sheet .lb-title { font-size: 13px; color: #9aa3c7; text-align: center; padding: 4px 0 6px; }
+.lb-sheet .btn { width: 100%; min-height: 48px; font-size: 16px; border-radius: 12px; justify-content: center; display: flex; align-items: center; }
+.lb-sheet .lb-item.danger { background: transparent; border: 1px solid rgba(243,18,96,.6); color: #ff8fab; }
+.lb-sheet .lb-cancel { margin-top: 4px; background: rgba(255,255,255,.06); }
+
+/* 12. Confirm dialog (every confirm here guards a destructive action): big buttons, red 确定 on the right */
+#adConfirm .ad-modal-card .row { display: flex; gap: 10px; }
+#adConfirm .ad-modal-card .btn { flex: 1 1 0; min-height: 44px; font-size: 15px; border-radius: 12px; }
+#adConfirm #adConfirmOk { background: #f31260 !important; color: #fff !important; border-color: transparent !important; font-weight: 700; }

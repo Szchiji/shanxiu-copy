@@ -1,0 +1,20 @@
+const fs=require('node:fs'),assert=require('node:assert/strict');
+const {JSDOM}=require('jsdom');
+(async()=>{
+ const dom=new JSDOM('<div id="buttons"></div><aside id="adminSide"></aside><main class="admin-main"></main>',{url:'https://review.invalid',runScripts:'outside-only'}),w=dom.window,d=w.document,calls=[];
+ w.confirm=()=>true;w.fetch=async(url,opt={})=>{calls.push([url,opt.method||'GET']);return {ok:true,json:async()=>url.includes('/buttons/preview')?{rows:[]}:{items:[{record_id:'known-failure',feature:'listing_edit',step:'notification',city:'深圳',status:'failed',retryable:true,reason:'安全示例'},{record_id:'unknown-send',feature:'renewal',step:'channel',city:'深圳',status:'unknown',retryable:false,reason:'送达不明，禁止重发'}],total:2,has_more:false}};};
+ w.eval(fs.readFileSync('miniapp/admin-buttons.js','utf8'));
+ const box=d.querySelector('#buttons');let value;
+ w.yycjButtons.mount(box,{context:'welcome',value:[{type:'webapp',label:'首页',target:'home'},{type:'url',label:'<img src=x>',target:'https://example.invalid/'}],onChange:x=>value=x});
+ assert.equal(box.querySelector('img'),null);box.querySelector('[data-bdown="0"]').click();assert.equal(value[0].label,'<img src=x>');
+ const enabled=box.querySelector('[data-bkey="enabled"]');enabled.checked=false;enabled.dispatchEvent(new w.Event('input',{bubbles:true}));assert.equal(value[0].enabled,false);
+ const row=box.querySelector('[data-bkey="new_row"]');row.checked=true;row.dispatchEvent(new w.Event('input',{bubbles:true}));assert.equal(value[0].new_row,true);
+ box.querySelector('[data-bremove="1"]').click();assert.equal(value.length,1);
+ w.yycjButtons.mount(box,{context:'approval',city:'深圳',value:null,inherited:{mode:'custom',items:[{type:'webapp',label:'首页',target:'home'}]},onChange:x=>value=x});
+ const mode=box.querySelector('[data-bmode]');assert.equal(mode.value,'inherit');mode.value='custom';mode.dispatchEvent(new w.Event('change',{bubbles:true}));assert.deepEqual(JSON.parse(JSON.stringify(value)),{mode:'custom',items:[]});box.querySelector('[data-badd]').click();assert.equal(value.items.length,1);
+ w.eval(fs.readFileSync('miniapp/admin-executions.js','utf8'));d.querySelector('[data-pane="executions"]').click();await new Promise(r=>setTimeout(r,30));
+ assert.equal(d.querySelectorAll('[data-execution-retry]').length,1);assert.equal(calls.filter(x=>x[1]==='POST').length,0);
+ const retry=d.querySelector('[data-execution-retry]');retry.click();retry.click();await new Promise(r=>setTimeout(r,30));assert.equal(calls.filter(x=>x[1]==='POST'&&x[0].includes('/retry')).length,1);
+ d.querySelector('#executionCity').value='深圳';d.querySelector('#executionFilter').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await new Promise(r=>setTimeout(r,30));assert(calls.some(x=>x[0].includes('city=%E6%B7%B1%E5%9C%B3')));
+ dom.window.close();console.log('Message UI DOM: add/remove/reorder/row/enable/inherit, safe log retry/filter PASS');
+})().catch(e=>{console.error(e);process.exit(1)});

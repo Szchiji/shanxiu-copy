@@ -1,0 +1,41 @@
+#pins {
+  display:flex; gap:10px; overflow-x:auto; scroll-snap-type:x mandatory;
+  -webkit-overflow-scrolling:touch; padding: 2px 0 0; margin: 0;
+}
+#pins .pin-card {
+  flex: 0 0 56%;
+  aspect-ratio: 3 / 4;
+  height: auto !important;
+  min-height: 0 !important;
+  scroll-snap-align: start;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  background-color: #141b2b !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: cover !important;
+}
+#pins .pin-card img.pin-cover {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  z-index: 1;
+}
+#pins .pin-copy {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  padding: 28px 10px 10px;
+  color: #fff;
+  text-shadow: 0 1px 4px #000;
+  z-index: 2;
+  background: linear-gradient(transparent, rgba(0,0,0,.72));
+}
+.feed-3, #feed.has-cover { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:0; }
+#feed .cover-wrap .thumb { width:100%; height:200px !important; object-fit:cover; }
+#feedSplit{
+  height:1px;
+  margin:12px 8px 14px;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.22), transparent);
+  border:0;
+}

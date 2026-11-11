@@ -1,0 +1,33 @@
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_DB: ${POSTGRES_DB:-merged}
+      TZ: Asia/Shanghai
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-merged}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  bot:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      # 容器内固定监听 8080，对外端口由 BOT_PORT 决定
+      PORT: "8080"
+      TZ: Asia/Shanghai
+    ports:
+      - "${BOT_PORT:-8080}:8080"
+
+volumes:
+  pgdata:

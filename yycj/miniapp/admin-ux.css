@@ -1,0 +1,55 @@
+.ad-toast {
+  position: fixed; left: 50%; bottom: 86px; transform: translateX(-50%);
+  z-index: 80; max-width: 86vw;
+  padding: 10px 14px; border-radius: 12px;
+  background: #1d2b44; color: #e8eef8; font-size: 14px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.35);
+}
+.ad-toast.ok { background: #163528; color: #b6f0d0; }
+.ad-toast.err { background: #3a1524; color: #ffb4c8; }
+.ad-toast.hidden { display: none; }
+.ad-modal {
+  position: fixed; inset: 0; z-index: 90;
+  background: rgba(0,0,0,.45);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.ad-modal.hidden { display: none; }
+.ad-modal-card {
+  width: 100%; max-width: 360px;
+  background: #171e2c; border: 1px solid #2a3348;
+  border-radius: 16px; padding: 16px;
+}
+.ad-modal-card p { margin: 0 0 14px; font-size: 15px; line-height: 1.5; }
+.ad-savebar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 55;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; padding: 10px 14px;
+  background: #1b2740; border-top: 1px solid #2e4a78;
+}
+.ad-savebar.hidden { display: none; }
+.ad-more { position: relative; }
+.ad-more-menu {
+  position: absolute; right: 0; bottom: 40px; z-index: 20;
+  min-width: 132px; padding: 6px;
+  background: #121826; border: 1px solid #2a3348; border-radius: 12px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.ad-more-menu.hidden { display: none; }
+.ad-more-menu .btn { width: 100%; text-align: left; }
+@media (min-width: 860px) { .ad-savebar { left: 168px; } }
+.ph-list { display: flex; flex-direction: column; gap: 6px; margin: 6px 0 8px; }
+.ph-row {
+  display: grid; grid-template-columns: 1fr auto auto auto;
+  gap: 6px; align-items: center;
+  padding: 8px 10px; border: 1px solid #2a3348; border-radius: 10px;
+  background: #121826;
+}
+.ph-name { font-size: 14px; color: #e8eef8; }
+.ph-row .muted { font-size: 11px; }
+.ph-row .btn { padding: 4px 8px; font-size: 12px; }
+@media (max-width: 420px) {
+  .ph-row { grid-template-columns: 1fr auto; }
+  .ph-row .muted { display: none; }
+}
+#btnSeed { display: none !important; }

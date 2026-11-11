@@ -1,0 +1,54 @@
+/* 我的上架：近7天数据（3 格一行） */
+html body .ls-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:8px;}
+html body .ls-k{grid-column:1/-1;font-size:11px;color:var(--t-muted);}
+html body .ls-cell{display:flex;flex-direction:column;align-items:flex-start;padding:6px 8px;border-radius:10px;background:rgba(201,164,92,.08);border:1px solid var(--t-line);min-width:0;}
+html body .ls-cell b{font-size:17px;line-height:1.15;color:var(--t-accent);font-weight:700;}
+html body .ls-cell i{font-style:normal;font-size:12px;color:var(--t-text);}
+html body .ls-cell em{font-style:normal;font-size:10px;color:var(--t-muted);}
+/* 写评价：点星 + 晒图 */
+html body #revStars.rk-hide{display:none!important;}
+html body .rk-stars{display:flex;align-items:center;gap:4px;margin:4px 0 10px;}
+html body .rk-stars [data-star]{width:40px;height:40px;padding:0;border:0;background:transparent;font-size:30px;line-height:40px;color:rgba(255,255,255,.18);cursor:pointer;}
+html body .rk-stars [data-star].on{color:#E3C88A;text-shadow:0 0 8px rgba(227,200,138,.35);}
+html body .rk-lbl{margin-left:8px;font-size:13px;color:var(--t-accent);}
+html body .rk-photos{display:flex;gap:8px;margin:8px 0 12px;}
+html body .rk-ph,html body .rk-add{position:relative;width:76px;height:76px;border-radius:10px;overflow:hidden;flex:0 0 auto;}
+html body .rk-ph img{width:100%;height:100%;object-fit:cover;display:block;}
+html body .rk-x{position:absolute;top:2px;right:2px;width:22px;height:22px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;font-size:15px;line-height:22px;padding:0;}
+html body .rk-add{display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px dashed var(--t-accent);color:var(--t-accent);font-size:13px;cursor:pointer;}
+html body .rk-add i{font-style:normal;font-size:10px;color:var(--t-muted);margin-top:2px;}
+html body .rk-add.busy{opacity:.6;}
+/* 详情评价里的晒图 */
+html body .rv-phs{display:flex;gap:6px;margin-top:6px;}
+html body .rv-ph{width:64px;height:64px;object-fit:cover;border-radius:8px;}
+/* 提交反馈：表单内提示行；按钮加载态 */
+html body .rk-msg{min-height:0;margin:8px 2px 0;font-size:13px;line-height:1.45;color:var(--t-muted);}
+html body .rk-msg:empty{display:none;}
+html body .rk-msg.err{color:var(--t-dangertext,#ffb4c8);}
+html body #reviewForm button.rk-sending{opacity:.7;}
+/* toast 永远在最上层；有固定顶栏（评价/详情）时落在顶栏下面，不再被挡住 */
+html body #toast{z-index:1000!important;}
+html body.rev-open #toast,html body.xhs-detail #toast{top:calc(56px + max(env(safe-area-inset-top,0px),calc(var(--tg-safe-area-inset-top,0px) + var(--tg-content-safe-area-inset-top,0px))))!important;}
+/* 结构化评价表单（墨绿金） */
+html body #revText.rk-hide{display:none!important;}
+html body .rk-fields{display:flex;flex-direction:column;gap:12px;margin:4px 0 12px;}
+html body .rk-fh{display:flex;justify-content:space-between;align-items:baseline;margin:0 0 6px;}
+html body .rk-fh label{font-weight:600;font-size:15px;color:var(--t-text);margin:0;}
+html body .rk-cnt{font-size:12px;color:var(--t-muted);}
+html body .rk-field textarea{width:100%;margin:0;resize:vertical;min-height:46px;}
+html body .rk-star-row{display:flex;align-items:center;gap:10px;margin:4px 0 8px;}
+html body .rk-star-row .rk-k{font-weight:600;font-size:15px;}
+html body .rk-star-row .rk-stars{margin:0;}
+html body .rk-box{border:1px solid var(--t-line);border-radius:12px;padding:10px 12px;margin:10px 0;background:rgba(255,255,255,.02);}
+html body .rk-box.rk-proof{border-color:rgba(201,164,92,.55);border-style:dashed;}
+html body .rk-bh{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
+html body .rk-bh b{font-size:14px;}
+html body .rk-bh .muted{font-size:12px;}
+html body .rk-box .rk-photos{margin:8px 0 4px;}
+html body .rk-cnt2{font-size:12px;color:var(--t-accent);}
+html body .rk-note{font-size:12px;color:var(--t-muted);text-align:center;margin:10px 4px 0;line-height:1.5;}
+html body .rk-box.hidden{display:none;}
+/* 详情页结构化评价 */
+html body .rv-sec{margin:6px 0 0;}
+html body .rv-sec dt{font-size:12px;color:var(--t-accent);margin:8px 0 2px;font-weight:600;}
+html body .rv-sec dd{margin:0;line-height:1.55;white-space:pre-wrap;word-break:break-word;}

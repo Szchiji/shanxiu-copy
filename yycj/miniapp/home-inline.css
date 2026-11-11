@@ -1,0 +1,22 @@
+/* moved verbatim from the inline <style> in go.html / index.html (same cascade position) */
+    #feed,#pins{visibility:visible!important;}
+    #topMeta{display:none!important;}
+    #pins { margin-bottom:4px!important;padding-bottom:0!important;display:flex !important; gap:10px; overflow-x:auto !important; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; }
+    #pins .pin-card { flex:0 0 46%!important; width:46%!important; min-width:46%!important; aspect-ratio:3/4!important; height:auto!important; position:relative!important; overflow:hidden!important; border-radius:14px!important; scroll-snap-align:start; display:block!important; }
+    #pins .pin-card img.pin-cover, #pins .pin-card img.thumb { display:block!important; position:absolute!important; inset:0!important; width:100%!important; height:100%!important; object-fit:cover!important; }
+    #pins .pin-copy { position:absolute; left:0; right:0; bottom:0; padding:28px 10px 10px; background:linear-gradient(transparent,rgba(0,0,0,.72)); color:#fff; z-index:2; }
+    #feed{margin-top:0!important;}#feedSplit{height:1px;margin:12px 8px 14px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.22),transparent);}
+    #feed.has-cover, #favList { display:grid !important; grid-template-columns:1fr 1fr 1fr !important; gap:8px !important; }
+    #feed .cover-wrap, #favList .cover-wrap { position:relative !important; display:block !important; overflow:hidden; }
+    #feed .cover-wrap .thumb, #favList .cover-wrap .thumb { width:100%!important; height:168px!important; object-fit:cover!important; display:block!important; border-radius:12px 12px 0 0!important; }
+    .cover-card { padding:0 !important; overflow:hidden !important; }
+    .fav-btn { position:absolute !important; top:6px; left:6px; width:26px; height:26px; border:0; border-radius:50%; background:rgba(0,0,0,.45); color:#fff; z-index:3; }
+    .badge-loc,.badge-tag,.badge-n { position:absolute !important; color:#fff; font-size:9px; padding:2px 6px; border-radius:999px; z-index:3; }
+    .badge-loc { top:6px; right:6px; background:rgba(20,40,90,.82); }
+    .badge-tag { left:6px; bottom:6px; background:#6d4aff; }
+    .badge-n { right:6px; bottom:6px; background:rgba(0,0,0,.5); }
+    .cover-card .body { padding:6px !important; }
+    #citySheet { display:none !important; }
+    .city-drop.hidden { display:none !important; }
+    #detail .media-grid { display:none !important; }
+    .bottom-nav{position:fixed;left:0;right:0;bottom:0;z-index:80;}
