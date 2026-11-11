@@ -19,11 +19,13 @@
         <span class="pill">{{ actor.role }}</span>
       </div>
     </header>
-    {% if is_demo %}
+    {% if is_demo or is_preview %}
     <div class="banner demo" role="status">
-      示例数据 · 本地演示（非生产）·
+      {% if is_preview %}公开预览 · 示例数据 · 未连接真实 Telegram Bot，不会向外发送消息
+      {% else %}示例数据 · 本地演示（非生产）·
       {% if bot_connected %}已配置 Bot Token{% else %}未连接真实 Telegram Bot，不会向外发送消息{% endif %}
       · 架构已接入唯一 Dispatcher（{{ bot_status.dispatcher_routers | join("、") }}）
+      {% endif %}
     </div>
     <nav class="demo-as" aria-label="切换示例身份">
       <span>示例身份：</span>

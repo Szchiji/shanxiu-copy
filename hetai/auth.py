@@ -116,9 +116,14 @@ def can_super(role: str) -> bool:
 
 
 async def resolve_actor(request: Request, settings: Settings, session, *, require_admin: bool = False) -> Actor:
-    if settings.is_demo:
-        if not is_loopback(request):
+    if settings.uses_fixtures:
+        if settings.is_demo and not is_loopback(request):
             raise HTTPException(status_code=403, detail="演示模式仅允许本机回环访问")
+        if settings.is_preview:
+            from hetai.preview_auth import valid_preview_session
+
+            if not valid_preview_session(request, settings):
+                raise HTTPException(status_code=401, detail="需要预览口令")
         key = (request.query_params.get("as") or request.cookies.get("hetai_demo_as") or "admin").strip()
         if key not in DEMO_ACTORS:
             key = "admin"

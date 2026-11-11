@@ -6,6 +6,21 @@ from functools import lru_cache
 from typing import Literal
 
 from pydantic import Field, field_validator
+
+_WEAK_SECRETS = {"", "change-me", "demo", "secret", "password", "preview", "admin"}
+
+
+def is_strong_secret(value: str, *, min_length: int = 24) -> bool:
+    if not value or value.strip() != value:
+        return False
+    if value.strip().lower() in _WEAK_SECRETS:
+        return False
+    if len(value) < min_length:
+        return False
+    if len(set(value)) < 8:
+        return False
+    return True
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -17,7 +32,7 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    mode: Literal["demo", "production"] = "production"
+    mode: Literal["demo", "production", "preview"] = "production"
     host: str = "127.0.0.1"
     port: int = 8765
     log_level: str = "INFO"
@@ -33,6 +48,7 @@ class Settings(BaseSettings):
 
     admin_ids: str = ""
     session_secret: str = ""
+    preview_access_secret: str = ""
 
     run_scheduler: bool = False
     seed_demo: bool = True
@@ -52,6 +68,7 @@ class Settings(BaseSettings):
         "redis_url",
         "admin_ids",
         "session_secret",
+        "preview_access_secret",
         "host",
         "log_level",
         "bot_transport",
@@ -68,6 +85,14 @@ class Settings(BaseSettings):
         return self.mode == "demo"
 
     @property
+    def is_preview(self) -> bool:
+        return self.mode == "preview"
+
+    @property
+    def uses_fixtures(self) -> bool:
+        return self.is_demo or self.is_preview
+
+    @property
     def bot_connected(self) -> bool:
         return bool(self.bot_token) and not self.bot_token.startswith("0:")
 
@@ -77,7 +102,7 @@ class Settings(BaseSettings):
         raw = (self.bot_transport or "").strip().lower().replace("_", "-")
         if raw in {"dryrun", "dry-run", "dry"}:
             raw = "dry-run"
-        if self.is_demo:
+        if self.is_demo or self.is_preview:
             return "local"
         if raw in {"", "dry-run"}:
             return "dry-run"
@@ -118,6 +143,8 @@ class Settings(BaseSettings):
         url = self.database_url
         if self.is_demo and not url:
             return "sqlite+aiosqlite:///./var/hetai-demo.sqlite"
+        if self.is_preview and not url:
+            return "sqlite+aiosqlite:///./var/hetai-preview.sqlite"
         if not url:
             raise RuntimeError("生产模式必须设置 HETAI_DATABASE_URL")
         if url.startswith("postgres://"):
@@ -125,6 +152,21 @@ class Settings(BaseSettings):
         if url.startswith("postgresql://") and "+asyncpg" not in url:
             url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
         return url
+
+    def bind_host(self) -> str:
+        if self.is_preview and (self.host or "").lower() in {"", "127.0.0.1", "localhost", "::1"}:
+            return "0.0.0.0"
+        return self.host or "127.0.0.1"
+
+    def bind_port(self) -> int:
+        import os
+
+        if os.environ.get("HETAI_PORT"):
+            return int(self.port)
+        rail = (os.environ.get("PORT") or "").strip()
+        if rail.isdigit():
+            return int(rail)
+        return int(self.port)
 
     def validate_boot(self) -> None:
         if self.is_demo:
@@ -134,6 +176,12 @@ class Settings(BaseSettings):
                     "演示模式只允许绑定 127.0.0.1 / localhost / ::1，"
                     "禁止在非回环地址以不安全方式启动。"
                 )
+            return
+        if self.is_preview:
+            if not is_strong_secret(self.preview_access_secret):
+                raise RuntimeError("预览模式必须设置足够强度的 HETAI_PREVIEW_ACCESS_SECRET，否则拒绝启动")
+            if not is_strong_secret(self.session_secret):
+                raise RuntimeError("预览模式必须设置足够强度的 HETAI_SESSION_SECRET，否则拒绝启动")
             return
         # production: fail closed
         if self.mode != "production":

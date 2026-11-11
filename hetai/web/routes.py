@@ -47,12 +47,13 @@ def _ctx(request: Request, actor, **extra):
         "app_name": hetai.APP_NAME,
         "actor": actor,
         "is_demo": settings.is_demo,
+        "is_preview": settings.is_preview,
         "bot_connected": settings.bot_connected,
         "bot_status": bot_status(settings),
         "can_admin": can_admin(actor.role) if actor else False,
         "can_super": can_super(actor.role) if actor else False,
-        "demo_actors": DEMO_ACTORS if settings.is_demo else {},
-        "demo_as": (request.cookies.get("hetai_demo_as") or "admin") if settings.is_demo else "",
+        "demo_actors": DEMO_ACTORS if settings.uses_fixtures else {},
+        "demo_as": (request.cookies.get("hetai_demo_as") or "admin") if settings.uses_fixtures else "",
         "query": request.query_params,
         "flash_error": request.query_params.get("error"),
         "flash_ok": request.query_params.get("ok"),
@@ -571,8 +572,8 @@ async def admin_task_update(
 
 @router.get("/demo/as/{key}")
 async def demo_switch(request: Request, key: str):
-    if not get_settings().is_demo:
-        return _redirect("/app", error="生产模式不可切换示例身份")
+    if not get_settings().uses_fixtures:
+        return _redirect("/app", error="当前模式不可切换示例身份")
     if key not in DEMO_ACTORS:
         key = "admin"
     dest = request.query_params.get("next") or "/app"
@@ -580,4 +581,89 @@ async def demo_switch(request: Request, key: str):
         dest = "/app"
     resp = RedirectResponse(dest, status_code=303)
     resp.set_cookie("hetai_demo_as", key, httponly=True, samesite="lax")
+    return resp
+
+
+@router.get("/preview/login", response_class=HTMLResponse)
+async def preview_login_page(request: Request):
+    from hetai.preview_auth import (
+        COOKIE_CSRF,
+        issue_csrf_token,
+        public_origin,
+        safe_next,
+        set_auth_cookies,
+    )
+
+    settings = get_settings()
+    if not settings.is_preview:
+        return _redirect("/app")
+    csrf = request.cookies.get(COOKIE_CSRF) or issue_csrf_token(settings)
+    err = request.query_params.get("error")
+    messages = {
+        "csrf": "请求已过期或校验失败，请重试。",
+        "auth": "口令不正确。",
+        "rate": "尝试次数过多，请稍后再试。",
+    }
+    html = templates.TemplateResponse(
+        request,
+        "preview_login.html",
+        {
+            "app_name": hetai.APP_NAME,
+            "csrf_token": csrf,
+            "next_path": safe_next(request.query_params.get("next")),
+            "flash_error": messages.get(err or "", None) if err else None,
+        },
+    )
+    secure = public_origin(request).startswith("https://")
+    html.set_cookie(COOKIE_CSRF, csrf, httponly=True, samesite="lax", secure=secure, max_age=3600, path="/")
+    return html
+
+
+@router.post("/preview/login")
+async def preview_login_submit(request: Request):
+    from hetai.preview_auth import (
+        COOKIE_CSRF,
+        issue_csrf_token,
+        issue_preview_session,
+        limiter,
+        safe_next,
+        set_auth_cookies,
+        valid_csrf_token,
+        verify_preview_password,
+        _client_key,
+    )
+    import hmac
+
+    settings = get_settings()
+    if not settings.is_preview:
+        return _redirect("/app")
+    key = _client_key(request)
+    if limiter.too_many(key):
+        return RedirectResponse("/preview/login?error=rate", status_code=303)
+    form = await request.form()
+    csrf_token = str(form.get("csrf_token") or "")
+    cookie_csrf = request.cookies.get(COOKIE_CSRF) or ""
+    if not (
+        valid_csrf_token(csrf_token, settings)
+        and valid_csrf_token(cookie_csrf, settings)
+        and hmac.compare_digest(csrf_token, cookie_csrf)
+    ):
+        return RedirectResponse("/preview/login?error=csrf", status_code=303)
+    password = str(form.get("password") or "")
+    if not verify_preview_password(password, settings):
+        limiter.fail(key)
+        return RedirectResponse("/preview/login?error=auth", status_code=303)
+    limiter.clear(key)
+    dest = safe_next(str(form.get("next") or "/app"))
+    resp = RedirectResponse(dest, status_code=303)
+    set_auth_cookies(resp, request, settings, issue_preview_session(settings), issue_csrf_token(settings))
+    return resp
+
+
+@router.post("/preview/logout")
+async def preview_logout(request: Request):
+    from hetai.preview_auth import clear_auth_cookies
+
+    resp = RedirectResponse("/preview/login", status_code=303)
+    clear_auth_cookies(resp)
     return resp

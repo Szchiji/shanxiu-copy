@@ -69,3 +69,16 @@ HETAI_PYTEST=1 pytest tests/hetai -q
 ```
 
 只跑合台测试，不影响仓库里原有的旧测试套件。
+
+
+## 公开预览（preview）
+
+独立测试部署使用 `HETAI_MODE=preview`，不是本地 demo，也不是生产。
+
+- 必须设置足够强度的 `HETAI_PREVIEW_ACCESS_SECRET` 与 `HETAI_SESSION_SECRET`，否则拒绝启动。
+- 允许绑定 `0.0.0.0`；若环境提供 `PORT` 且未显式设置 `HETAI_PORT`，则使用 `PORT`。
+- 未登录只能访问 `/health`、`/preview/login` 和静态资源。`/health` 只返回 `ok` / `app` / `mode`。
+- 登录页：`GET/POST /preview/login`，字段 `username`（固定 `preview`，可忽略）与 `password`（预览口令），另有隐藏域 `csrf_token`、`next`。
+- 登录后可切换示例身份并做受控的审核/积分等写操作。数据为示例，传输为 local，不发送 Telegram，不自动注册 webhook。
+- 退出：`POST /preview/logout`。
+- 不要把预览口令写入仓库或日志。本地可用隔离的权限 600 凭证文件，不要提交。

@@ -26,6 +26,7 @@ from hetai.db import close_engine, get_engine, init_engine, session_scope
 from hetai.jobs import scheduler_status, start_scheduler, stop_scheduler
 from hetai.models import User
 from hetai.seed import seed_demo_if_empty
+from hetai.preview_auth import PreviewAccessMiddleware
 from hetai.web.routes import router as web_router
 
 logger = logging.getLogger("hetai")
@@ -55,7 +56,7 @@ async def lifespan(app: FastAPI):
     Path("var").mkdir(exist_ok=True)
     init_engine(settings)
     await _run_migrations()
-    if settings.is_demo and settings.seed_demo:
+    if settings.uses_fixtures and settings.seed_demo:
         async with session_scope() as session:
             result = await seed_demo_if_empty(session)
             logger.info("demo seed: %s", result)
@@ -72,6 +73,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     if settings is not None:
         reset_settings_cache()
     app = FastAPI(title=APP_NAME, lifespan=lifespan, docs_url=None, redoc_url=None)
+    app.add_middleware(PreviewAccessMiddleware)
     app.include_router(web_router)
     static_dir = Path(__file__).resolve().parent / "web" / "static"
     app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
@@ -85,6 +87,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 await session.execute(select(User).limit(1))
         except Exception as exc:
             db_ok = f"error:{type(exc).__name__}"
+        if st.is_preview:
+            return {"ok": db_ok == "ok", "app": APP_NAME, "mode": "preview"}
         return {
             "ok": db_ok == "ok",
             "app": APP_NAME,
@@ -102,7 +106,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.post("/api/auth/telegram")
     async def auth_telegram(request: Request):
         st = get_settings()
-        if st.is_demo and not st.bot_connected:
+        if (st.is_demo or st.is_preview) and not st.bot_connected:
             raise HTTPException(
                 status_code=401,
                 detail="演示模式未连接真实 Bot，不提供 Telegram 登录。本机回环可直接使用示例身份。",
@@ -158,6 +162,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                     "app_name": APP_NAME,
                     "actor": type("X", (), {"display_name": "访客", "role": "anonymous"})(),
                     "is_demo": get_settings().is_demo,
+                    "is_preview": get_settings().is_preview,
                     "bot_connected": get_settings().bot_connected,
                     "bot_status": bot_status(get_settings()),
                     "can_admin": False,
@@ -188,8 +193,8 @@ def run() -> None:
 
     uvicorn.run(
         "hetai.app:app",
-        host=settings.host,
-        port=settings.port,
+        host=settings.bind_host(),
+        port=settings.bind_port(),
         log_level=settings.log_level.lower(),
         reload=False,
         workers=1,
