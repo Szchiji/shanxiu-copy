@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="{{ context.href('/app/inbox') if context else '/app/inbox' }}">← 待办列表</a></p>
+<article class="card">
+  {% if item.is_demo_fixture %}<span class="badge demo">示例数据</span>{% endif %}
+  <h1>{{ item.title }}</h1>
+  <p class="muted">{{ group.title if group else "" }} · {{ author.display_name if author else "" }} · {{ item.status }}</p>
+  <p class="body-text">{{ item.body }}</p>
+  {% if item.review_note %}<p class="muted">审核备注：{{ item.review_note }}</p>{% endif %}
+  <p class="banner demo">{{ reward_label }}{% if reward_points %}（{{ reward_points }} 积分）{% endif %} · 不会自动增加信用分</p>
+</article>
+<form class="stack card" method="post" action="/app/inbox/{{ item.id }}/review">
+  <label>备注（将写入审核记录） <input name="review_note" maxlength="256" value="{{ item.review_note }}"></label>
+  <div class="actions">
+    <button type="submit" name="action" value="approve">{% if item.status == 'approved' %}再次提交通过（不会重复奖励）{% else %}通过并上架{% endif %}</button>
+    <button type="submit" name="action" value="reject" class="danger">{% if item.status == 'approved' %}更正为拒绝（原积分流水保留，必要时另记冲销）{% else %}拒绝{% endif %}</button>
+  </div>
+</form>
+{% if events %}
+<h2>审核与更正记录</h2>
+<ul class="timeline">
+  {% for ev in events %}
+  <li>
+    <strong>{{ ev.action }}</strong>
+    <span class="muted">{{ ev.previous_status }} → {{ ev.new_status }}</span>
+    {% if ev.note %}<span>{{ ev.note }}</span>{% endif %}
+    {% if ev.reward_delta %}<span>积分 {{ ev.reward_delta }}</span>{% endif %}
+  </li>
+  {% endfor %}
+</ul>
+{% endif %}
+{% endblock %}

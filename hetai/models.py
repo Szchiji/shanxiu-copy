@@ -170,6 +170,23 @@ class TaskConfig(Base):
     )
 
 
+class ReviewEvent(Base):
+    """审核与更正留痕；不删除既有积分流水。"""
+
+    __tablename__ = "hetai_review_events"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    submission_id: Mapped[int] = mapped_column(ForeignKey("hetai_submissions.id"), index=True)
+    actor_id: Mapped[int] = mapped_column(ForeignKey("hetai_users.id"), index=True)
+    action: Mapped[str] = mapped_column(String(16))
+    previous_status: Mapped[str] = mapped_column(String(16), default="")
+    new_status: Mapped[str] = mapped_column(String(16), default="")
+    note: Mapped[str] = mapped_column(String(256), default="")
+    reward_delta: Mapped[int] = mapped_column(Integer, default=0)
+    is_demo_fixture: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+
+
 class ProcessedUpdate(Base):
     """Webhook 去重：成功才标 processed；失败可重试；同一 update 并发有守卫。"""
 

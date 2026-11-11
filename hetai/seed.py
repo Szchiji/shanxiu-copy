@@ -83,14 +83,24 @@ async def seed_demo_if_empty(session: AsyncSession) -> dict:
         chat_id=-100900001,
         title="示例群 · 华东运营",
         description="示例数据：用于演示群设置、成员与积分租户隔离。",
-        settings={"points_enabled": True, "directory_enabled": True},
+        settings={
+            "points_enabled": True,
+            "directory_enabled": True,
+            "publish_reward_points": 10,
+            "publish_reward_label": "示例规则：目录投稿通过后奖励 10 积分",
+        },
         is_demo_fixture=True,
     )
     g2 = Group(
         chat_id=-100900002,
         title="示例群 · 测试交流",
         description="示例数据：与华东运营群的积分账本相互隔离。",
-        settings={"points_enabled": True, "directory_enabled": True},
+        settings={
+            "points_enabled": True,
+            "directory_enabled": True,
+            "publish_reward_points": 0,
+            "publish_reward_label": "示例规则：本群通过投稿默认不奖励积分",
+        },
         is_demo_fixture=True,
     )
     session.add_all([g1, g2])

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>积分账本</h1>
+<p class="lead">{{ context.group.title if context.group else "群" }}。流水只追加，不删除旧记录。{% if not context.can_admin_current %}你只能看到自己的流水。{% endif %}</p>
+{% if context.can_admin_current and accounts %}
+<h2>账户</h2>
+<ul class="timeline">
+  {% for a in accounts %}
+  <li>{{ users[a.user_id].display_name if users.get(a.user_id) else a.user_id }} · {{ a.balance }}</li>
+  {% endfor %}
+</ul>
+{% endif %}
+<h2>流水</h2>
+{% if ledger %}
+<ul class="timeline">
+  {% for r in ledger %}
+  <li>{{ users[r.user_id].display_name if users.get(r.user_id) else r.user_id }} · {{ r.delta }} → {{ r.balance_after }} · {{ r.reason }}</li>
+  {% endfor %}
+</ul>
+{% else %}
+<p class="empty">尚无流水。</p>
+{% endif %}
+{% endblock %}

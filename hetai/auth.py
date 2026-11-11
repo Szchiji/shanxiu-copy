@@ -16,9 +16,10 @@ from hetai.config import Settings
 from hetai.models import User
 
 DEMO_ACTORS = {
-    "admin": {"telegram_id": 900001, "label": "示例管理员", "role": "super"},
-    "operator": {"telegram_id": 900002, "label": "示例运营", "role": "operator"},
-    "member": {"telegram_id": 900003, "label": "示例成员", "role": "member"},
+    "admin": {"telegram_id": 900001, "label": "示例管理员（超级）", "role": "super"},
+    "operator": {"telegram_id": 900002, "label": "示例运营（仅华东运营群）", "role": "operator"},
+    "member": {"telegram_id": 900003, "label": "示例成员（仅华东运营群）", "role": "member"},
+    "guest": {"telegram_id": 900004, "label": "示例访客（仅测试交流群）", "role": "member"},
 }
 
 INITDATA_MAX_AGE = 86400
@@ -63,13 +64,14 @@ def validate_init_data(init_data: str, bot_token: str, *, max_age: int = INITDAT
     if not hmac.compare_digest(calc, received):
         raise HTTPException(status_code=401, detail="initData 签名无效")
     auth_date_raw = parsed.get("auth_date")
-    if auth_date_raw:
-        try:
-            auth_date = int(auth_date_raw)
-        except ValueError as exc:
-            raise HTTPException(status_code=401, detail="auth_date 无效") from exc
-        if max_age > 0 and time.time() - auth_date > max_age:
-            raise HTTPException(status_code=401, detail="initData 已过期")
+    if not auth_date_raw:
+        raise HTTPException(status_code=401, detail="initData 缺少 auth_date")
+    try:
+        auth_date = int(auth_date_raw)
+    except ValueError as exc:
+        raise HTTPException(status_code=401, detail="auth_date 无效") from exc
+    if max_age > 0 and time.time() - auth_date > max_age:
+        raise HTTPException(status_code=401, detail="initData 已过期")
     user = None
     if parsed.get("user"):
         try:
@@ -78,7 +80,20 @@ def validate_init_data(init_data: str, bot_token: str, *, max_age: int = INITDAT
             raise HTTPException(status_code=401, detail="user 字段无法解析") from exc
     if not user or "id" not in user:
         raise HTTPException(status_code=401, detail="initData 无用户信息")
-    return {"user": user, "auth_date": int(auth_date_raw) if auth_date_raw else None}
+    # chat_instance is never treated as chat_id or as an access grant.
+    chat = None
+    if parsed.get("chat"):
+        try:
+            chat = json.loads(parsed["chat"]) if isinstance(parsed["chat"], str) else parsed["chat"]
+        except json.JSONDecodeError as exc:
+            raise HTTPException(status_code=401, detail="chat 字段无法解析") from exc
+    return {
+        "user": user,
+        "auth_date": auth_date,
+        "start_param": parsed.get("start_param") or parsed.get("startapp") or "",
+        "chat": chat if isinstance(chat, dict) else None,
+        "chat_instance": parsed.get("chat_instance"),
+    }
 
 
 def issue_access_token(telegram_id: int, secret: str, *, ttl: int = 86400) -> str:

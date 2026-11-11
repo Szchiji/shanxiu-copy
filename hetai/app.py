@@ -115,6 +115,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         init_data = (body or {}).get("initData") or ""
         payload = validate_init_data(init_data, st.bot_token)
         telegram_id = int(payload["user"]["id"])
+        # start_param / chat / chat_instance never grant membership or admin scope.
         async with session_scope() as session:
             user = (
                 await session.execute(select(User).where(User.telegram_id == telegram_id))
@@ -131,7 +132,43 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             elif user.is_banned:
                 raise HTTPException(status_code=403, detail="账号已被封禁")
             token = issue_access_token(telegram_id, st.session_secret)
-        resp = JSONResponse({"ok": True, "token": token, "telegram_id": telegram_id})
+            from hetai.services.context import hinted_ids_from_mapping, load_actor_memberships
+            from hetai.auth import Actor
+
+            actor = Actor(
+                user_id=user.id,
+                telegram_id=user.telegram_id,
+                display_name=user.display_name or str(telegram_id),
+                role=user.role,
+                is_demo=False,
+                source="telegram-token",
+            )
+            _, accessible, _ = await load_actor_memberships(session, actor)
+            hint_map = {
+                "start_param": payload.get("start_param") or "",
+                "startapp": payload.get("start_param") or "",
+                "chat_id": (payload.get("chat") or {}).get("id") if payload.get("chat") else None,
+            }
+            hints = hinted_ids_from_mapping(hint_map)
+            allowed_ids = {g.id for g in accessible}
+            chat_ids = {g.chat_id: g for g in accessible}
+            hint_group = None
+            if hints.get("group_id") in allowed_ids:
+                hint_group = next(g for g in accessible if g.id == hints["group_id"])
+            elif hints.get("chat_id") in chat_ids:
+                hint_group = chat_ids[hints["chat_id"]]
+            context_hint = None
+            if hint_group is not None:
+                context_hint = {"group_id": hint_group.id, "title": hint_group.title}
+        resp = JSONResponse(
+            {
+                "ok": True,
+                "telegram_id": telegram_id,
+                "context_hint": context_hint,
+                "chat_instance_bound": False,
+            }
+        )
+        # token stays in HttpOnly cookie; not returned in the body
         resp.set_cookie("hetai_token", token, httponly=True, samesite="lax", secure=True)
         return resp
 
@@ -166,7 +203,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                     "bot_connected": get_settings().bot_connected,
                     "bot_status": bot_status(get_settings()),
                     "can_admin": False,
+                    "can_inbox": False,
                     "can_super": False,
+                    "context": None,
                     "demo_actors": {},
                     "demo_as": "",
                     "flash_error": None,

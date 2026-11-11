@@ -1,25 +1,24 @@
 {% extends "base.html" %}
 {% block content %}
 <h1>目录</h1>
-<p class="muted">已审核通过的投稿会出现在这里。这是同一合台应用的用户面，不是另一套站点。</p>
+<p class="lead">已审核通过的条目会出现在这里。{% if context and context.view == 'group' and context.group %}当前只看「{{ context.group.title }}」。{% elif context and context.view == 'global' %}全局视图下显示全部已通过条目。{% else %}个人视图只显示你所在群的内容。{% endif %}</p>
 <form class="filters" method="get" action="/app">
+  {% if context and context.view == 'group' and context.group %}
+  <input type="hidden" name="group" value="{{ context.group.id }}">
+  {% else %}
+  <input type="hidden" name="view" value="{{ context.view if context else 'personal' }}">
+  {% endif %}
   <input type="search" name="q" value="{{ q }}" placeholder="搜索标题或正文">
-  <select name="group_id">
-    <option value="0">全部群</option>
-    {% for g in groups %}
-    <option value="{{ g.id }}" {% if group_id == g.id %}selected{% endif %}>{{ g.title }}</option>
-    {% endfor %}
-  </select>
-  <button type="submit">筛选</button>
+  <button type="submit">搜索</button>
 </form>
 {% if items %}
 <section class="listing">
   {% for item in items %}
-  <article>
+  <article class="card listing-card">
     {% if item.is_demo_fixture %}<span class="badge demo">示例数据</span>{% endif %}
-    <h2><a href="/app/listings/{{ item.id }}">{{ item.title }}</a></h2>
+    <h2><a href="{{ context.href('/app/listings/' ~ item.id) if context else '/app/listings/' ~ item.id }}">{{ item.title }}</a></h2>
     <p class="muted">{{ group_map[item.group_id].title if group_map[item.group_id] else "群" }} · {{ authors[item.author_id].display_name if authors[item.author_id] else "作者" }}</p>
-    <p>{{ item.body[:120] }}{% if item.body|length > 120 %}…{% endif %}</p>
+    <p>{{ item.body[:160] }}{% if item.body|length > 160 %}…{% endif %}</p>
   </article>
   {% endfor %}
 </section>

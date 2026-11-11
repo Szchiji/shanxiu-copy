@@ -11,6 +11,12 @@
       <label><input type="checkbox" name="is_active" value="1" {% if group.is_active %}checked{% endif %}> 启用该群</label>
       <label><input type="checkbox" name="points_enabled" value="1" {% if group.settings and group.settings.points_enabled %}checked{% endif %}> 启用积分</label>
       <label><input type="checkbox" name="directory_enabled" value="1" {% if group.settings and group.settings.directory_enabled %}checked{% endif %}> 启用目录投稿</label>
+      <label>通过投稿奖励积分（默认 0，不自动给信用分）
+        <input type="number" name="publish_reward_points_value" min="0" step="1" value="{{ group.settings.publish_reward_points if group.settings and group.settings.publish_reward_points else 0 }}">
+      </label>
+      <label>奖励规则说明（请写清楚这是示例或正式规则）
+        <input name="publish_reward_label_value" maxlength="256" value="{{ group.settings.publish_reward_label if group.settings and group.settings.publish_reward_label else '' }}">
+      </label>
       <div class="actions"><button type="submit">保存设置</button></div>
     </form>
   </section>

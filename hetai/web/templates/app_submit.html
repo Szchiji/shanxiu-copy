@@ -1,12 +1,13 @@
 {% extends "base.html" %}
 {% block content %}
 <h1>投稿到目录</h1>
+<p class="lead">提交后进入待审。是否奖励积分由该群明确规则决定，默认是 0，不会自动增加信用分。</p>
 {% if groups %}
 <form class="stack card" method="post" action="/app/submit">
   <label>群
     <select name="group_id" required>
       {% for g in groups %}
-      <option value="{{ g.id }}">{{ g.title }}</option>
+      <option value="{{ g.id }}" {% if context and context.group and context.group.id == g.id %}selected{% endif %}>{{ g.title }}</option>
       {% endfor %}
     </select>
   </label>
@@ -15,6 +16,6 @@
   <div class="actions"><button type="submit">提交审核</button></div>
 </form>
 {% else %}
-<p class="empty">你当前的示例身份不在任何可投稿的群中。可在顶部切换为「示例成员」。</p>
+<p class="empty">你当前的示例身份不在任何可投稿的群中。可在上方切换为「示例成员（仅华东运营群）」。</p>
 {% endif %}
 {% endblock %}
